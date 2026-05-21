@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import api from "../services/api";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -19,7 +20,8 @@ import {
   Filter,
   Download,
   Building2,
-  Settings
+  Settings,
+  Plus
 } from "lucide-react";
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
@@ -35,20 +37,7 @@ const FADE_UP = {
   })
 };
 
-// ─── DUMMY DATA ───────────────────────────────────────────────────────────────
-
-const SUMMARY_STATS = [
-  { label: "Total Penduduk", value: "4.821", sub: "+12 bulan ini", icon: Users, color: "blue" },
-  { label: "Pengajuan Surat", value: "42", sub: "18 butuh validasi", icon: Files, color: "indigo" },
-  { label: "Aduan Publik", value: "7", sub: "3 status darurat", icon: AlertTriangle, color: "amber" },
-  { label: "Realisasi Anggaran", value: "92%", sub: "Sesuai Target Q2", icon: BarChart3, color: "emerald" },
-];
-
-const PENDING_SURAT = [
-  { id: "SKD-841", nama: "Budi Santoso", tipe: "Keterangan Domisili", tgl: "10 menit lalu", wilayah: "RT 01 / RW 10" },
-  { id: "SKU-902", nama: "Siti Aminah", tipe: "Izin Usaha (SKU)", tgl: "25 menit lalu", wilayah: "RT 03 / RW 10" },
-  { id: "SKP-221", nama: "Rahmat Hidayat", tipe: "Keterangan Pindah", tgl: "1 jam lalu", wilayah: "RT 02 / RW 10" },
-];
+// ─── DUMMY DATA (REMOVED) ───────────────────────────────────────────────────────────────
 
 // ─── COMPONENTS ───────────────────────────────────────────────────────────────
 
@@ -61,7 +50,8 @@ export default function AdminDashboard() {
     laporanAktif: 8,
     suratPending: 12
   });
-  const [loading, setLoading] = useState(true);
+  const [pendingSuratList, setPendingSuratList] = useState<any[]>([]);
+  const [financeData, setFinanceData] = useState({ income: 0, expense: 0, balance: 0 });
 
   useEffect(() => {
     fetchStats();
@@ -69,19 +59,51 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/v1/warga");
-      const data = res.data;
+      // Fetch users
+      const usersRes = await api.get("/users");
+      const usersData = usersRes.data.data || [];
+      const adminCount = usersData.filter((w: any) => w.role === 'ADMIN_RT').length;
+
+      // Fetch surat
+      const suratRes = await api.get("/surat");
+      const suratData = suratRes.data.data || [];
+      const pendingSurat = suratData.filter((s: any) => s.status === 'PENDING');
+      
+      // Fetch reports
+      const reportsRes = await api.get("/reports");
+      const reportsData = reportsRes.data.data || [];
+      const pendingReports = reportsData.filter((r: any) => r.status === 'PENDING' || r.status === 'DIPROSES');
+
+      // Fetch finance
+      let inc = 0, exp = 0, bal = 0;
+      try {
+        const finRes = await api.get("/admin/finance");
+        inc = finRes.data.data?.income || 0;
+        exp = finRes.data.data?.expense || 0;
+        bal = finRes.data.data?.balance || 0;
+      } catch (err) {
+        console.error("Finance API error:", err);
+      }
+
       setStats({
-        totalWarga: data.length,
-        adminRT: data.filter((w: any) => w.role === 'ADMIN_RT').length,
-        laporanAktif: 8,
-        suratPending: 12
+        totalWarga: usersData.length,
+        adminRT: adminCount,
+        laporanAktif: pendingReports.length,
+        suratPending: pendingSurat.length
       });
+      setPendingSuratList(pendingSurat.slice(0, 5)); // Show max 5 latest pending
+      setFinanceData({ income: inc, expense: exp, balance: bal });
     } catch (err) {
       console.error("Error fetching stats:", err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getFinancePercentage = () => {
+    if (financeData.income === 0) return 0;
+    const pct = (financeData.expense / financeData.income) * 100;
+    return Math.min(100, Math.max(0, pct)).toFixed(1);
   };
 
   const SUMMARY_STATS = [
@@ -238,31 +260,39 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {PENDING_SURAT.map((row, idx) => (
-                      <tr key={idx} className="group hover:bg-indigo-50/30 transition-colors">
-                        <td className="px-10 py-7">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xs font-black text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
-                              {row.nama.charAt(0)}
+                    {pendingSuratList.length > 0 ? (
+                      pendingSuratList.map((row, idx) => (
+                        <tr key={idx} className="group hover:bg-indigo-50/30 transition-colors">
+                          <td className="px-10 py-7">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xs font-black text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                                {row.user?.name ? row.user.name.charAt(0).toUpperCase() : '?'}
+                              </div>
+                              <div>
+                                <p className="text-sm font-black text-slate-900">{row.user?.name || 'Anonim'}</p>
+                                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">NIK: {row.user?.nik || '-'} • {new Date(row.createdAt).toLocaleDateString()}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm font-black text-slate-900">{row.nama}</p>
-                              <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">{row.wilayah} • {row.tgl}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-10 py-7">
-                          <span className="px-3 py-1.5 bg-slate-50 rounded-lg text-[11px] font-black text-slate-700 border border-slate-100">
-                            {row.tipe}
-                          </span>
-                        </td>
-                        <td className="px-10 py-7">
-                          <button className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100 uppercase tracking-widest">
-                            Validasi
-                          </button>
+                          </td>
+                          <td className="px-10 py-7">
+                            <span className="px-3 py-1.5 bg-slate-50 rounded-lg text-[11px] font-black text-slate-700 border border-slate-100">
+                              {row.jenisSurat?.replace(/_/g, ' ') || 'SURAT'}
+                            </span>
+                          </td>
+                          <td className="px-10 py-7">
+                            <button onClick={() => navigate('/admin/validasi')} className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100 uppercase tracking-widest">
+                              Validasi
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className="px-10 py-8 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">
+                          Tidak ada surat menunggu validasi
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -295,10 +325,10 @@ export default function AdminDashboard() {
                   <div>
                     <div className="flex justify-between text-[11px] font-black mb-3 px-1">
                       <span className="text-slate-400 uppercase tracking-widest">Realisasi Dana</span>
-                      <span className="text-emerald-600">92.4%</span>
+                      <span className="text-emerald-600">{getFinancePercentage()}%</span>
                     </div>
                     <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
-                      <motion.div initial={{ width: 0 }} animate={{ width: "92.4%" }} className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]" />
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${getFinancePercentage()}%` }} className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]" />
                     </div>
                   </div>
                 </div>
