@@ -1,4 +1,4 @@
-package com.DigitalVillageHub.demo.dto;
+package com.DigitalVillageHub.demo.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,4 +1,4 @@
-package com.DigitalVillageHub.demo.entity;
+package com.DigitalVillageHub.demo.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;

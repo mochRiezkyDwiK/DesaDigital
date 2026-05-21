@@ -1,6 +1,6 @@
-package com.DigitalVillageHub.demo.repository;
+package com.DigitalVillageHub.demo.persistence;
 
-import com.DigitalVillageHub.demo.entity.User;
+import com.DigitalVillageHub.demo.model.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

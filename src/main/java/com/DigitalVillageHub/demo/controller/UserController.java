@@ -1,6 +1,6 @@
 package com.DigitalVillageHub.demo.controller;
 
-import com.DigitalVillageHub.demo.entity.User;
+import com.DigitalVillageHub.demo.model.entity.User;
 import com.DigitalVillageHub.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

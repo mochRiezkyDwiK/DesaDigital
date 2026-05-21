@@ -1,7 +1,7 @@
 package com.DigitalVillageHub.demo.controller;
 
-import com.DigitalVillageHub.demo.dto.LoginRequest;
-import com.DigitalVillageHub.demo.dto.RegisterRequest;
+import com.DigitalVillageHub.demo.model.dto.LoginRequest;
+import com.DigitalVillageHub.demo.model.dto.RegisterRequest;
 import com.DigitalVillageHub.demo.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,25 +19,11 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-        try {
-            return ResponseEntity.status(201).body(authService.register(request));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", e.getMessage()
-            ));
-        }
+        return ResponseEntity.status(201).body(authService.register(request));
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        try {
-            return ResponseEntity.ok(authService.login(request));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", e.getMessage()
-            ));
-        }
+        return ResponseEntity.ok(authService.login(request));
     }
 }

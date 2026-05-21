@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import DashboardWarga from "./pages/DashboardWarga";
@@ -15,7 +15,22 @@ import AdminKeuangan from "./pages/AdminKeuangan";
 import AdminPengaturan from "./pages/AdminPengaturan";
 
 // Halaman Dummy Sementara (Hanya yang benar-benar belum ada filenya)
-const LaporDummy = () => <div className="p-10 text-center text-2xl font-bold text-slate-800">Halaman Lapor (Sedang Dibangun)</div>;
+
+// Komponen Pelindung Rute (UX: Mencegah akses tanpa login)
+const ProtectedRoute = ({ children, requiredRole }: { children: JSX.Element, requiredRole?: string }) => {
+  const token = localStorage.getItem("token");
+  const userRole = localStorage.getItem("role");
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requiredRole && userRole !== requiredRole) {
+    return <Navigate to="/" replace />; // Arahkan ke beranda jika bukan admin
+  }
+
+  return children;
+};
 
 function App() {
   return (
@@ -28,32 +43,22 @@ function App() {
           {/* Rute Login - Pastikan merujuk ke file Login.tsx yang premium tadi */}
           <Route path="/login" element={<Login />} />
           
-          {/* Rute Dashboard - Pastikan file DashboardWarga.tsx sudah di-save */}
-          <Route path="/dashboard-warga" element={<DashboardWarga />} />
+          {/* Rute Warga (Butuh Login) */}
+          <Route path="/dashboard-warga" element={<ProtectedRoute requiredRole="WARGA"><DashboardWarga /></ProtectedRoute>} />
+          <Route path="/layanan" element={<ProtectedRoute requiredRole="WARGA"><Layanan /></ProtectedRoute>} />
+          <Route path="/lapor" element={<ProtectedRoute requiredRole="WARGA"><Lapor /></ProtectedRoute>} />
+          <Route path="/finansial" element={<ProtectedRoute requiredRole="WARGA"><Finansial /></ProtectedRoute>} />
+          <Route path="/profil" element={<ProtectedRoute requiredRole="WARGA"><Profil /></ProtectedRoute>} />
 
-          <Route path="/layanan" element={<Layanan />} />
-
-          <Route path="/lapor" element={<Lapor />} />
-
-          <Route path="/finansial" element={<Finansial />} />
-
-          <Route path="/profil" element={<Profil />} />
-
-
-          <Route path="/admin" element={<AdminDashboard />} />
-
-          <Route path="/admin/validasi" element={<AdminValidasiSurat />} />
-
-          <Route path="/admin/laporan" element={<AdminLaporan />} />
-
-          <Route path="/admin/penduduk" element={<AdminPenduduk />} />
-
-          <Route path="/admin/keuangan" element={<AdminKeuangan />} />
-
-          <Route path="/admin/pengaturan" element={<AdminPengaturan />} />
+          {/* Rute Admin (Butuh Hak Akses ADMIN) */}
+          <Route path="/admin" element={<ProtectedRoute requiredRole="ADMIN"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/validasi" element={<ProtectedRoute requiredRole="ADMIN"><AdminValidasiSurat /></ProtectedRoute>} />
+          <Route path="/admin/laporan" element={<ProtectedRoute requiredRole="ADMIN"><AdminLaporan /></ProtectedRoute>} />
+          <Route path="/admin/penduduk" element={<ProtectedRoute requiredRole="ADMIN"><AdminPenduduk /></ProtectedRoute>} />
+          <Route path="/admin/keuangan" element={<ProtectedRoute requiredRole="ADMIN"><AdminKeuangan /></ProtectedRoute>} />
+          <Route path="/admin/pengaturan" element={<ProtectedRoute requiredRole="ADMIN"><AdminPengaturan /></ProtectedRoute>} />
           
-          {/* Rute Lainnya */}
-          <Route path="/lapor" element={<LaporDummy />} />
+          {/* Rute Lainnya (Sudah dihapus karena duplicate dengan yang di atas) */}
         </Routes>
       </div>
     </Router>
