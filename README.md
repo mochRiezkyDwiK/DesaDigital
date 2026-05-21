@@ -1,3 +1,5 @@
+```
+
 DesaDigital_Project/
 ├── frontend/                               # Direktori utama untuk aplikasi Frontend (Antarmuka Pengguna)
 │   ├── public/                             # Berkas statis publik (ikon, favicon)
@@ -44,3 +46,5 @@ DesaDigital_Project/
 ├── mvnw, mvnw.cmd                          # Maven Wrapper untuk portabilitas *build*
 ├── Laporan_Progres.md                      # Laporan pengembangan proyek
 └── README.md                               # Dokumentasi dan panduan instalasi proyek
+
+```
