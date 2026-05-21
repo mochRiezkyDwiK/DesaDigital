@@ -1,6 +1,6 @@
 package com.DigitalVillageHub.demo.controller;
 
-import com.DigitalVillageHub.demo.entity.Finance;
+import com.DigitalVillageHub.demo.model.entity.Finance;
 import com.DigitalVillageHub.demo.service.AdminFinanceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -34,18 +34,11 @@ public class AdminFinanceController {
 
     @PostMapping
     public ResponseEntity<?> createTransaction(@RequestBody Finance finance) {
-        try {
-            return ResponseEntity.status(201).body(Map.of(
-                    "success", true,
-                    "message", "Transaksi berhasil ditambahkan",
-                    "data", adminFinanceService.createTransaction(finance)
-            ));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", e.getMessage()
-            ));
-        }
+        return ResponseEntity.status(201).body(Map.of(
+                "success", true,
+                "message", "Transaksi berhasil ditambahkan",
+                "data", adminFinanceService.createTransaction(finance)
+        ));
     }
 
     @PutMapping("/{id}")
@@ -53,34 +46,20 @@ public class AdminFinanceController {
             @PathVariable Long id,
             @RequestBody Finance finance
     ) {
-        try {
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "Transaksi berhasil diperbarui",
-                    "data", adminFinanceService.updateTransaction(id, finance)
-            ));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", e.getMessage()
-            ));
-        }
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Transaksi berhasil diperbarui",
+                "data", adminFinanceService.updateTransaction(id, finance)
+        ));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteTransaction(@PathVariable Long id) {
-        try {
-            adminFinanceService.deleteTransaction(id);
+        adminFinanceService.deleteTransaction(id);
 
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "Transaksi berhasil dihapus"
-            ));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", e.getMessage()
-            ));
-        }
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Transaksi berhasil dihapus"
+        ));
     }
 }

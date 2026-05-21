@@ -1,10 +1,10 @@
 package com.DigitalVillageHub.demo.service;
 
-import com.DigitalVillageHub.demo.dto.AuthResponse;
-import com.DigitalVillageHub.demo.dto.LoginRequest;
-import com.DigitalVillageHub.demo.dto.RegisterRequest;
-import com.DigitalVillageHub.demo.entity.User;
-import com.DigitalVillageHub.demo.repository.UserRepository;
+import com.DigitalVillageHub.demo.model.dto.AuthResponse;
+import com.DigitalVillageHub.demo.model.dto.LoginRequest;
+import com.DigitalVillageHub.demo.model.dto.RegisterRequest;
+import com.DigitalVillageHub.demo.model.entity.User;
+import com.DigitalVillageHub.demo.persistence.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Service;
