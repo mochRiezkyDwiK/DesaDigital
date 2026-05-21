@@ -1,7 +1,7 @@
 package com.DigitalVillageHub.demo.service;
 
-import com.DigitalVillageHub.demo.entity.Finance;
-import com.DigitalVillageHub.demo.repository.FinanceRepository;
+import com.DigitalVillageHub.demo.model.entity.Finance;
+import com.DigitalVillageHub.demo.persistence.FinanceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

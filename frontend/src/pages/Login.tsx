@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { toast } from "sonner";
+import api from "../services/api";
 import {
   ArrowLeft,
   ArrowRight,
@@ -92,7 +93,7 @@ export default function Login() {
     try {
       if (isRegister) {
         // A. AKSI REGISTRASI WARGA BARU
-        const response = await axios.post("http://localhost:5000/api/v1/auth/register", {
+        const response = await api.post("/auth/register", {
           nama_lengkap: namaLengkap,
           nik: nik,
           username: nik, // Username disamakan NIK agar fleksibel saat login
@@ -101,12 +102,12 @@ export default function Login() {
         });
 
         if (response.data.success) {
-          alert("Akun warga berhasil didaftarkan! Silakan masuk untuk melengkapi berkas.");
+          toast.success("Akun warga berhasil didaftarkan! Silakan masuk untuk melengkapi berkas.");
           toggleMode(); // Kembalikan ke mode login otomatis Ky
         }
       } else {
         // B. AKSI MASUK PORTAL (LOGIN)
-        const response = await axios.post("http://localhost:5000/api/v1/auth/login", {
+        const response = await api.post("/auth/login", {
           username: nik, // Key payload 'username' mendeteksi input Username teks maupun NIK
           password: password
         });
@@ -120,7 +121,7 @@ export default function Login() {
           localStorage.setItem("user", JSON.stringify(response.data.user));
           localStorage.setItem("role", response.data.user.role || "");
 
-          alert("Login Berhasil!");
+          toast.success("Login Berhasil!");
 
           // Pembagi jalur rute otomatis berdasarkan hak otoritas (Role)
           if (response.data.user.role === "ADMIN") {
@@ -132,7 +133,7 @@ export default function Login() {
       }
     } catch (error: any) {
       console.error("ERROR PADA MESIN AUTH SYSTEM FE:", error);
-      alert(error.response?.data?.message || "Gagal memproses permohonan, cek koneksi server Anda.");
+      toast.error(error.response?.data?.message || "Gagal memproses permohonan, cek koneksi server Anda.");
     } finally {
       setIsLoading(false);
     }
@@ -398,7 +399,7 @@ export default function Login() {
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
                   <label style={{ fontSize: "12px", fontWeight: 600, color: "#94A3B8" }}>Kata Sandi</label>
                   {!isRegister && (
-                    <button type="button" onClick={() => alert("Pemulihan akun silakan lapor RT setempat.")} style={{ fontSize: "12px", fontWeight: 600, color: "#6366F1", background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "inherit" }}>Lupa sandi?</button>
+                    <button type="button" onClick={() => toast.info("Pemulihan akun silakan lapor RT setempat.")} style={{ fontSize: "12px", fontWeight: 600, color: "#6366F1", background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "inherit" }}>Lupa sandi?</button>
                   )}
                 </div>
                 <div style={{ position: "relative" }}>

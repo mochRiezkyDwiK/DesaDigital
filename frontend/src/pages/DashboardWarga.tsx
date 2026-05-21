@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom"; // 1. Import Navigate
 import { 
@@ -44,7 +44,8 @@ const QUICK_STATS = [
   { label: "Poin Warga", value: "1.250", icon: Sparkles, trend: "Top 5%", color: "violet", path: "#" },
 ];
 
-const SURAT_LIST = [
+// ─── DUMMY DATA (FALLBACK) ───────────────────────────────────────────────────────────────
+const DUMMY_SURAT_LIST = [
   { id: "SKD-081", tipe: "Keterangan Domisili", status: "Validasi Sistem", tgl: "28 Apr 2026", progress: 65 },
   { id: "SKU-042", tipe: "Keterangan Usaha", status: "Selesai", tgl: "20 Apr 2026", progress: 100 },
 ];
@@ -53,7 +54,40 @@ const SURAT_LIST = [
 
 export default function DashboardWarga() {
   const [activeTab, setActiveTab] = useState("Ringkasan");
+  const [userData, setUserData] = useState<any>(null);
+  const [suratList, setSuratList] = useState<any[]>(DUMMY_SURAT_LIST);
   const navigate = useNavigate(); // 2. Inisialisasi navigate
+
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setUserData(user);
+        
+        // Fetch Surat Data
+        import("../services/api").then(({ default: api }) => {
+          api.get(`/surat/user/${user.id}`)
+            .then(res => {
+              if (res.data.success && res.data.data.length > 0) {
+                 // Map the backend data to match the UI structure
+                 const mapped = res.data.data.map((s: any) => ({
+                    id: s.id.toString(),
+                    tipe: s.tipeSurat,
+                    status: s.statusSurat,
+                    tgl: new Date(s.createdAt).toLocaleDateString(),
+                    progress: s.statusSurat === 'SELESAI' ? 100 : (s.statusSurat === 'PENDING' ? 30 : 65)
+                 }));
+                 setSuratList(mapped);
+              }
+            })
+            .catch(err => console.error("Failed to fetch surat", err));
+        });
+      } catch (e) {
+        console.error("Gagal membaca data user");
+      }
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#FDFEFF] font-sans antialiased flex overflow-hidden">
@@ -131,10 +165,10 @@ export default function DashboardWarga() {
             </button>
             <div className="flex items-center gap-3 pl-4 border-l border-slate-100">
               <div className="text-right hidden sm:block">
-                <p className="text-[13px] font-black text-slate-900 leading-none">Budi Santoso</p>
-                <p className="text-[10px] font-bold text-slate-400 mt-1">RT 01 / RW 10</p>
+                <p className="text-[13px] font-black text-slate-900 leading-none">{userData?.nama_lengkap || "Warga Desa"}</p>
+                <p className="text-[10px] font-bold text-slate-400 mt-1">NIK: {userData?.nik || "-"}</p>
               </div>
-              <img className="w-11 h-11 rounded-2xl border-2 border-white shadow-md ring-4 ring-slate-50" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Budi" alt="Avatar" />
+              <img className="w-11 h-11 rounded-2xl border-2 border-white shadow-md ring-4 ring-slate-50" src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userData?.nama_lengkap || 'Warga'}`} alt="Avatar" />
             </div>
           </div>
         </header>
@@ -212,8 +246,8 @@ export default function DashboardWarga() {
               </div>
 
               <div className="grid gap-5">
-                {SURAT_LIST.map((surat) => (
-                  <div key={surat.id} className="p-7 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm group hover:border-blue-200 transition-all">
+                {suratList.map((surat, index) => (
+                  <div key={surat.id || index} className="p-7 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm group hover:border-blue-200 transition-all">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                       <div className="flex items-center gap-5">
                         <div className="w-14 h-14 rounded-3xl bg-slate-50 flex items-center justify-center group-hover:bg-blue-600 group-hover:shadow-lg group-hover:shadow-blue-500/30 transition-all duration-500">

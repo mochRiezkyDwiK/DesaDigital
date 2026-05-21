@@ -1,7 +1,7 @@
 package com.DigitalVillageHub.demo.service;
 
-import com.DigitalVillageHub.demo.entity.User;
-import com.DigitalVillageHub.demo.repository.UserRepository;
+import com.DigitalVillageHub.demo.model.entity.User;
+import com.DigitalVillageHub.demo.persistence.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Service;
