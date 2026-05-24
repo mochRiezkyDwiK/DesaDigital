@@ -48,3 +48,4 @@ Thumbs.db
 # =========================
 temp/
 logs/
+src/main/resources/application.properties
