@@ -1,6 +1,6 @@
 package com.DigitalVillageHub.demo.service.interfaces;
 
-import com.DigitalVillageHub.demo.dto.pengaduan.*;
+import com.DigitalVillageHub.demo.model.dto.pengaduan.*;
 
 import java.util.List;
 

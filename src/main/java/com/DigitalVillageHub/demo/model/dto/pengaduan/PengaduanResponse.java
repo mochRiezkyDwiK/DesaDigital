@@ -1,4 +1,4 @@
-package com.DigitalVillageHub.demo.dto.pengaduan;
+package com.DigitalVillageHub.demo.model.dto.pengaduan;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;

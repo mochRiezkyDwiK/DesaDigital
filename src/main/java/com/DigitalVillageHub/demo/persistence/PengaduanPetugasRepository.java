@@ -1,7 +1,7 @@
-package com.DigitalVillageHub.demo.repository;
+package com.DigitalVillageHub.demo.persistence;
 
-import com.DigitalVillageHub.demo.entity.PengaduanPetugas;
-import com.DigitalVillageHub.demo.entity.PengaduanPetugasId;
+import com.DigitalVillageHub.demo.model.entity.PengaduanPetugas;
+import com.DigitalVillageHub.demo.model.entity.PengaduanPetugasId;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
