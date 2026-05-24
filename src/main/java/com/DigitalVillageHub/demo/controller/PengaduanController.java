@@ -1,7 +1,7 @@
 package com.DigitalVillageHub.demo.controller;
 
-import com.DigitalVillageHub.demo.dto.ApiResponse;
-import com.DigitalVillageHub.demo.dto.pengaduan.*;
+import com.DigitalVillageHub.demo.model.dto.ApiResponse;
+import com.DigitalVillageHub.demo.model.dto.pengaduan.*;
 import com.DigitalVillageHub.demo.service.interfaces.PengaduanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

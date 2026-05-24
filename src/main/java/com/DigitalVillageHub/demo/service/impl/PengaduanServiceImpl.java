@@ -1,12 +1,12 @@
 package com.DigitalVillageHub.demo.service.impl;
 
-import com.DigitalVillageHub.demo.dto.pengaduan.*;
-import com.DigitalVillageHub.demo.entity.*;
+import com.DigitalVillageHub.demo.model.dto.pengaduan.*;
+import com.DigitalVillageHub.demo.model.entity.*;
 import com.DigitalVillageHub.demo.exception.BadRequestException;
 import com.DigitalVillageHub.demo.exception.ResourceNotFoundException;
-import com.DigitalVillageHub.demo.repository.PengaduanPetugasRepository;
-import com.DigitalVillageHub.demo.repository.PengaduanRepository;
-import com.DigitalVillageHub.demo.repository.UserRepository;
+import com.DigitalVillageHub.demo.persistence.PengaduanPetugasRepository;
+import com.DigitalVillageHub.demo.persistence.PengaduanRepository;
+import com.DigitalVillageHub.demo.persistence.UserRepository;
 import com.DigitalVillageHub.demo.service.interfaces.PengaduanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
