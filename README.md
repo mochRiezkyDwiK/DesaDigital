@@ -81,4 +81,3 @@ Aplikasi *frontend* berada di dalam folder `frontend/` dan secara bawaan berjala
 - **Error saat instalasi NPM**: Hapus folder `node_modules` dan file `package-lock.json`, lalu lakukan instalasi ulang `npm install`.
 - **Database Connection Refused**: Pastikan *service* MySQL sudah berjalan, dan sesuaikan *port/password* pada `application.properties` dengan yang ada di sistem Anda.
 - **Port In Use (5000 atau 5173)**: Tutup aplikasi atau *service* lain yang menggunakan port tersebut.
-=======

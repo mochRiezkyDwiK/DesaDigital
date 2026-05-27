@@ -1,5 +1,6 @@
 package com.DigitalVillageHub.demo.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,7 +26,7 @@ public class Finance {
     private String title;
 
     @Column(nullable = false)
-    private String type;
+    private String type; // Menyimpan data "PEMASUKAN" atau "PENGELUARAN" / "INCOME" atau "EXPENSE"
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
@@ -44,6 +45,7 @@ public class Finance {
     private BigDecimal currentBalance;
 
     @JsonProperty("transaction_date")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy") // FIX: Menyelaraskan format dari kalender web (24/05/2026)
     @Column(name = "transaction_date")
     private LocalDate transactionDate;
 

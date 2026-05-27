@@ -20,7 +20,7 @@ public class Surat {
     }
 
     public enum StatusSurat {
-        PENDING, REJECTED, PROSES, SELESAI
+        PENDING, PROSES, SELESAI, DITOLAK, REJECTED
     }
 
     @Id
@@ -46,6 +46,10 @@ public class Surat {
     @JsonProperty("alasan_ditolak")
     @Column(name = "alasan_ditolak", columnDefinition = "TEXT")
     private String alasanDitolak;
+
+    @JsonProperty("dokumen_url")
+    @Column(name = "dokumen_url", columnDefinition = "TEXT")
+    private String dokumenUrl;
 
     @JsonProperty("token_qr")
     @Column(name = "token_qr")

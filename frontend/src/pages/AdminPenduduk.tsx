@@ -20,7 +20,6 @@ import {
   Pencil,
   ShieldAlert,
   UserCheck,
-  Ban,
   Eye,
   FileText,
   SlidersHorizontal,
@@ -146,9 +145,9 @@ export default function AdminPenduduk() {
 
   const handleVerifyAction = async (
     id: number,
-    action: "ACC_TETAP" | "ACC_PENDATANG" | "TOLAK" | "BLOKIR"
+    action: "ACC" | "REJECT"
   ) => {
-    if (action === "TOLAK" && !alasanTolak.trim()) {
+    if (action === "REJECT" && !alasanTolak.trim()) {
       return alert("Mohon isi alasan penolakan berkas!");
     }
 
@@ -158,17 +157,13 @@ export default function AdminPenduduk() {
 
     try {
       const token = localStorage.getItem("token");
-      let targetStatus = "VERIFIED_TETAP";
-
-      if (action === "ACC_PENDATANG") targetStatus = "VERIFIED_PENDATANG";
-      if (action === "TOLAK") targetStatus = "REJECTED";
-      if (action === "BLOKIR") targetStatus = "BANNED";
+      const targetStatus = action === "ACC" ? "VERIFIED" : "DATA_REJECTED";
 
       const res = await axios.put(
-        `http://localhost:5000/api/v1/admin/penduduk/verify/${id}`,
+        `http://localhost:5000/api/v1/admin/penduduk/${id}/verifikasi`,
         {
-          status_akun: targetStatus,
-          alasan_ditolak: action === "TOLAK" ? alasanTolak : null,
+          statusAkun: targetStatus,
+          alasanDitolak: action === "REJECT" ? alasanTolak : null,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -180,7 +175,11 @@ export default function AdminPenduduk() {
         fetchPenduduk();
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || "Gagal memproses audit akun");
+      alert(
+        error.response?.data?.detail ||
+          error.response?.data?.message ||
+          "Gagal memproses audit akun"
+      );
     }
   };
 
@@ -222,7 +221,7 @@ export default function AdminPenduduk() {
   const totalKK = Array.from(new Set(penduduk.map((p) => p.no_kk).filter((kk) => kk))).length;
   const totalPendatang = penduduk.filter((p) => p.status_tinggal === "PENDATANG").length;
   const totalNeedAudit = penduduk.filter(
-    (p) => p.status_akun === "PENDING" || !p.rt || !p.rw || p.nik === "WARGA"
+    (p) => p.status_akun === "PENDING_VERIFICATION"
   ).length;
 
   const filteredPenduduk = penduduk.filter((p) => {
@@ -238,7 +237,7 @@ export default function AdminPenduduk() {
     if (typeFilter === "KK") matchCard = p.status_hubungan === "Kepala Keluarga";
     if (typeFilter === "PENDATANG") matchCard = p.status_tinggal === "PENDATANG";
     if (typeFilter === "AUDIT") {
-      matchCard = p.status_akun === "PENDING" || !p.rt || !p.rw || p.nik === "WARGA";
+      matchCard = p.status_akun === "PENDING_VERIFICATION";
     }
 
     return matchSearch && matchRt && matchRw && matchCard;
@@ -582,7 +581,7 @@ export default function AdminPenduduk() {
 
                               <td className="px-6 py-5">
                                 <div className="flex items-center justify-center gap-2">
-                                  {warga.status_akun === "PENDING" ? (
+                                  {warga.status_akun === "PENDING_VERIFICATION" ? (
                                     <button
                                       onClick={() => {
                                         setSelectedPenduduk(warga);
@@ -596,9 +595,9 @@ export default function AdminPenduduk() {
                                   ) : (
                                     <span
                                       className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                                        warga.status_akun === "BANNED"
+                                        warga.status_akun === "DATA_REJECTED"
                                           ? "bg-red-50 text-red-600"
-                                          : warga.status_akun?.startsWith("VERIFIED")
+                                          : warga.status_akun === "VERIFIED" || warga.status_akun?.startsWith("VERIFIED")
                                             ? "bg-emerald-50 text-emerald-700"
                                             : "bg-slate-100 text-slate-500"
                                       }`}
@@ -803,37 +802,19 @@ export default function AdminPenduduk() {
                   </div>
 
                   <div className="space-y-2 mt-6">
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => handleVerifyAction(selectedPenduduk.id, "ACC_TETAP")}
-                        className="py-3 bg-emerald-600 text-white text-xs font-semibold rounded-xl hover:bg-emerald-700 flex items-center justify-center gap-1.5 transition-all"
-                      >
-                        <UserCheck size={14} />
-                        ACC Tetap
-                      </button>
-
-                      <button
-                        onClick={() => handleVerifyAction(selectedPenduduk.id, "ACC_PENDATANG")}
-                        className="py-3 bg-indigo-600 text-white text-xs font-semibold rounded-xl hover:bg-indigo-700 flex items-center justify-center gap-1.5 transition-all"
-                      >
-                        <UserCheck size={14} />
-                        ACC Datang
-                      </button>
-                    </div>
-
                     <button
-                      onClick={() => handleVerifyAction(selectedPenduduk.id, "TOLAK")}
-                      className="w-full py-3 bg-red-50 border border-red-200 text-red-600 text-xs font-semibold rounded-xl hover:bg-red-600 hover:text-white transition-all"
+                      onClick={() => handleVerifyAction(selectedPenduduk.id, "ACC")}
+                      className="w-full py-3 bg-emerald-600 text-white text-xs font-semibold rounded-xl hover:bg-emerald-700 flex items-center justify-center gap-1.5 transition-all"
                     >
-                      Tolak berkas
+                      <UserCheck size={14} />
+                      ACC Berkas
                     </button>
 
                     <button
-                      onClick={() => handleVerifyAction(selectedPenduduk.id, "BLOKIR")}
-                      className="w-full py-3 bg-slate-900 text-white text-xs font-semibold rounded-xl hover:bg-red-600 transition-all flex items-center justify-center gap-1.5"
+                      onClick={() => handleVerifyAction(selectedPenduduk.id, "REJECT")}
+                      className="w-full py-3 bg-red-50 border border-red-200 text-red-600 text-xs font-semibold rounded-xl hover:bg-red-600 hover:text-white transition-all"
                     >
-                      <Ban size={14} />
-                      Blokir akun
+                      Tolak berkas
                     </button>
                   </div>
                 </div>

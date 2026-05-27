@@ -1,11 +1,13 @@
 package com.DigitalVillageHub.demo.controller;
 
+import com.DigitalVillageHub.demo.dto.VerifikasiWargaDTO;
 import com.DigitalVillageHub.demo.model.entity.User;
 import com.DigitalVillageHub.demo.service.AdminPendudukService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -101,6 +103,28 @@ public class AdminPendudukController {
                             request.get("alasan_ditolak")
                     )
             ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        }
+    }
+
+    @PutMapping("/{id}/verifikasi")
+    public ResponseEntity<?> verifikasiBerkasWarga(
+            @PathVariable Long id,
+            @RequestBody VerifikasiWargaDTO dto
+    ) {
+        try {
+            User updated = adminPendudukService.verifikasiBerkasWarga(id, dto);
+
+            HashMap<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Status verifikasi warga berhasil diperbarui");
+            response.put("data", updated);
+
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
