@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<?> handleMaxUploadSize(MaxUploadSizeExceededException e) {
-        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(Map.of(
+        return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE).body(Map.of(
                 "success", false,
                 "message", "Ukuran file terlalu besar. Silakan unggah gambar maksimal 10MB."
         ));
