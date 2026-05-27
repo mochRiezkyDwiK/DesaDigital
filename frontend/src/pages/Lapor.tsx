@@ -1,33 +1,36 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { 
-  MessageSquare, 
-  Camera, 
-  MapPin, 
-  Send, 
+import {
   ArrowLeft,
-  AlertCircle,
+  Camera,
   CheckCircle2,
-  Image as ImageIcon,
+  Clock3,
   Flag,
-  Info
+  Image as ImageIcon,
+  MapPin,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Users,
 } from "lucide-react";
-
-// ─── CONFIGURATION ────────────────────────────────────────────────────────────
 
 const EASE_SPRING = [0.16, 1, 0.3, 1];
 
 const FADE_UP = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 18 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, delay: i * 0.1, ease: EASE_SPRING }
-  })
+    transition: { duration: 0.6, delay: i * 0.08, ease: EASE_SPRING },
+  }),
 };
 
-// ─── COMPONENTS ───────────────────────────────────────────────────────────────
+const STEP_ITEMS = [
+  { title: "Pilih kategori", desc: "Infrastruktur, sosial, keamanan, lingkungan", icon: Flag },
+  { title: "Tambahkan lokasi", desc: "Cantumkan RT / RW atau titik spesifik", icon: MapPin },
+  { title: "Pantau status", desc: "Laporan diproses dan status diperbarui", icon: CheckCircle2 },
+];
 
 export default function Lapor() {
   const navigate = useNavigate();
@@ -36,178 +39,259 @@ export default function Lapor() {
     judul: "",
     kategori: "Infrastruktur",
     deskripsi: "",
-    lokasi: ""
+    lokasi: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    setStep(2); // Pindah ke screen "Berhasil"
+    setStep(2);
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFEFF] font-sans antialiased pb-20">
-      
-      {/* ── HEADER ── */}
-      <header className="h-24 bg-white border-b border-slate-100 sticky top-0 z-50 px-8 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <button 
-            onClick={() => navigate('/dashboard-warga')}
-            className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-900 transition-all"
-          >
-            <ArrowLeft size={20} strokeWidth={2.5} />
-          </button>
-          <h1 className="text-xl font-black text-slate-900 tracking-tight italic">
-            LAPOR<span className="text-blue-600">DESA</span>
-          </h1>
-        </div>
-        <div className="hidden sm:flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-2xl border border-blue-100">
-          <Info size={14} className="text-blue-600" />
-          <p className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">Laporan Anda bersifat rahasia</p>
+    <div className="min-h-screen bg-[#F6F9FC] font-sans antialiased text-slate-900">
+      <header className="sticky top-0 z-50 border-b border-white/70 bg-white/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-10">
+          <div className="flex min-w-0 items-center gap-4">
+            <button
+              onClick={() => navigate("/dashboard-warga")}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-slate-200 text-slate-500 transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-400">Pusat Aduan Warga</p>
+              <h1 className="truncate text-lg font-black tracking-tight text-slate-950">Lapor Desa</h1>
+            </div>
+          </div>
+          <div className="hidden items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 sm:flex">
+            <ShieldCheck size={14} />
+            Aduan rahasia dan terpantau
+          </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-8 pt-16">
+      <main className="mx-auto max-w-7xl px-6 py-10 lg:px-10 lg:py-12">
         {step === 1 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-16">
-            
-            {/* Kiri: Deskripsi Fitur */}
-            <motion.div initial="hidden" animate="visible" variants={FADE_UP} custom={0} className="lg:col-span-2">
-              <span className="px-4 py-1.5 bg-red-500/10 border border-red-500/20 text-red-600 text-[10px] font-black uppercase tracking-[0.2em] rounded-full">Pusat Aduan Warga</span>
-              <h2 className="text-4xl font-black text-slate-900 mt-6 tracking-tighter leading-[1.1]">
-                Suarakan <br/> <span className="text-red-500 italic">Perubahan.</span>
-              </h2>
-              <p className="text-slate-500 text-sm mt-6 leading-relaxed font-medium">
-                Ada kendala di lingkungan Anda? Laporkan langsung ke pihak Desa. Setiap aduan akan diproses maksimal 3x24 jam.
-              </p>
-              
-              <div className="mt-12 space-y-6">
-                {[
-                  { t: "Pilih Kategori", d: "Infrastruktur, Sosial, Keamanan", i: Flag, c: "red" },
-                  { t: "Unggah Bukti", d: "Foto lokasi atau dokumen pendukung", i: Camera, c: "blue" },
-                  { t: "Pantau Real-time", d: "Cek progres penanganan via dashboard", i: CheckCircle2, c: "emerald" },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex gap-4">
-                    <div className={`w-10 h-10 rounded-xl bg-${item.c}-50 flex items-center justify-center shrink-0`}>
-                      <item.i className={`text-${item.c}-600`} size={18} strokeWidth={2.5} />
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
+            <motion.section
+              initial="hidden"
+              animate="visible"
+              variants={FADE_UP}
+              custom={0}
+              className="lg:col-span-2 space-y-6"
+            >
+              <div className="rounded-[2rem] border border-white bg-white p-7 shadow-[0_24px_60px_-30px_rgba(15,23,42,0.25)]">
+                <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-blue-700">
+                  <Sparkles size={12} />
+                  Laporan Lebih Terarah
+                </span>
+                <h2 className="mt-6 text-4xl font-black leading-[1.08] tracking-tight text-slate-950">
+                  Buat aduan yang <span className="italic text-blue-600">jelas, cepat, dan tenang.</span>
+                </h2>
+                <p className="mt-5 text-sm font-medium leading-relaxed text-slate-500">
+                  Laporkan kendala lingkungan tanpa ribet. Visualnya dibuat lebih halus agar fokus Anda tetap ke isi laporan dan tindak lanjutnya.
+                </p>
+
+                <div className="mt-8 grid gap-3">
+                  {STEP_ITEMS.map((item, index) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.title} className="flex items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm">
+                          <Icon size={18} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-black text-slate-950">{index + 1}. {item.title}</p>
+                          <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">{item.desc}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                      <Users size={18} />
                     </div>
                     <div>
-                      <h4 className="text-[13px] font-black text-slate-900">{item.t}</h4>
-                      <p className="text-[11px] text-slate-400 font-bold uppercase tracking-tight">{item.d}</p>
+                      <p className="text-xs font-black uppercase tracking-widest text-slate-400">Tim Desa</p>
+                      <p className="text-sm font-bold text-slate-950">Respons terpantau</p>
                     </div>
                   </div>
-                ))}
+                </div>
+                <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                      <Clock3 size={18} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-slate-400">Proses</p>
+                      <p className="text-sm font-bold text-slate-950">3x24 jam</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </motion.div>
+            </motion.section>
 
-            {/* Kanan: Form Laporan */}
-            <motion.div initial="hidden" animate="visible" variants={FADE_UP} custom={1} className="lg:col-span-3">
-              <form onSubmit={handleSubmit} className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.05)] space-y-8">
-                
-                {/* Judul Laporan */}
-                <div className="space-y-3">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Judul Laporan</label>
-                  <input 
-                    required
-                    type="text" 
-                    placeholder="Contoh: Lampu Jalan Mati di Gang 3"
-                    className="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-red-500/20 transition-all"
-                    value={formData.judul}
-                    onChange={(e) => setFormData({...formData, judul: e.target.value})}
-                  />
+            <motion.section initial="hidden" animate="visible" variants={FADE_UP} custom={1} className="lg:col-span-3">
+              <form onSubmit={handleSubmit} className="overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-[0_26px_80px_-36px_rgba(15,23,42,0.28)]">
+                <div className="border-b border-slate-100 bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 px-7 py-7 text-white sm:px-10">
+                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-blue-200/80">Formulir Aduan</p>
+                  <h3 className="mt-2 text-2xl font-black tracking-tight">Sampaikan masalah yang ingin diperbaiki</h3>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
+                    Gunakan deskripsi yang singkat namun lengkap supaya petugas bisa menindaklanjuti lebih cepat.
+                  </p>
                 </div>
 
-                {/* Kategori & Lokasi */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Kategori</label>
-                    <select 
-                      className="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 text-sm font-bold focus:ring-2 focus:ring-red-500/20 transition-all appearance-none"
-                      value={formData.kategori}
-                      onChange={(e) => setFormData({...formData, kategori: e.target.value})}
-                    >
-                      <option>Infrastruktur</option>
-                      <option>Keamanan</option>
-                      <option>Sosial</option>
-                      <option>Lingkungan</option>
-                    </select>
-                  </div>
-                  <div className="space-y-3">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Lokasi</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
-                      <input 
-                        type="text" 
-                        placeholder="RT 01 / RW 10"
-                        className="w-full bg-slate-50 border-none rounded-2xl py-4 pl-12 pr-6 text-sm font-bold focus:ring-2 focus:ring-red-500/20 transition-all"
-                        value={formData.lokasi}
-                        onChange={(e) => setFormData({...formData, lokasi: e.target.value})}
+                <div className="space-y-6 px-7 py-8 sm:px-10">
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="space-y-3">
+                      <label htmlFor="lapor-judul" className="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Judul Laporan</label>
+                      <input
+                        id="lapor-judul"
+                        required
+                        type="text"
+                        placeholder="Contoh: Lampu jalan mati di Gang 3"
+                        className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm font-semibold text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                        value={formData.judul}
+                        onChange={(e) => setFormData({ ...formData, judul: e.target.value })}
                       />
                     </div>
-                  </div>
-                </div>
-
-                {/* Deskripsi */}
-                <div className="space-y-3">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Deskripsi Aduan</label>
-                  <textarea 
-                    rows={4}
-                    placeholder="Jelaskan secara detail kendala yang dialami..."
-                    className="w-full bg-slate-50 border-none rounded-[2rem] py-5 px-6 text-sm font-bold focus:ring-2 focus:ring-red-500/20 transition-all resize-none"
-                    value={formData.deskripsi}
-                    onChange={(e) => setFormData({...formData, deskripsi: e.target.value})}
-                  />
-                </div>
-
-                {/* Upload Foto */}
-                <div className="space-y-3">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Unggah Bukti Foto (Opsional)</label>
-                  <div className="border-2 border-dashed border-slate-100 rounded-[2rem] p-8 flex flex-col items-center justify-center hover:border-red-200 transition-all cursor-pointer group">
-                    <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-3 group-hover:bg-red-50 group-hover:scale-110 transition-all">
-                      <ImageIcon className="text-slate-300 group-hover:text-red-500" size={24} />
+                    <div className="space-y-3">
+                      <label htmlFor="lapor-lokasi" className="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Lokasi</label>
+                      <div className="relative">
+                        <MapPin className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <input
+                          id="lapor-lokasi"
+                          type="text"
+                          placeholder="RT 01 / RW 10"
+                          className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-4 pl-11 pr-5 text-sm font-semibold text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                          value={formData.lokasi}
+                          onChange={(e) => setFormData({ ...formData, lokasi: e.target.value })}
+                        />
+                      </div>
                     </div>
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-tight">Klik untuk unggah atau seret file</p>
-                    <p className="text-[9px] font-bold text-slate-300 mt-1">PNG, JPG up to 10MB</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <fieldset className="space-y-3">
+                      <legend className="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Kategori</legend>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      {[
+                        "Infrastruktur",
+                        "Keamanan",
+                        "Sosial",
+                        "Lingkungan",
+                      ].map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, kategori: option })}
+                          className={`rounded-2xl border px-4 py-3 text-sm font-bold transition-all ${
+                            formData.kategori === option
+                              ? "border-blue-200 bg-blue-50 text-blue-700 shadow-sm"
+                              : "border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:bg-white"
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                    </fieldset>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label htmlFor="lapor-deskripsi" className="ml-1 block text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Deskripsi Aduan</label>
+                    <textarea
+                      id="lapor-deskripsi"
+                      rows={5}
+                      required
+                      placeholder="Jelaskan secara detail kendala yang dialami, kapan terjadi, dan dampaknya bagi warga."
+                      className="w-full resize-none rounded-[2rem] border border-slate-200 bg-slate-50 px-5 py-4 text-sm font-semibold text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                      value={formData.deskripsi}
+                      onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="rounded-[2rem] border border-dashed border-slate-200 bg-slate-50 px-6 py-7 transition-all hover:border-blue-300 hover:bg-blue-50/40">
+                    <div className="flex flex-col items-center text-center">
+                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm">
+                        <ImageIcon size={22} />
+                      </div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-500">Unggah bukti foto opsional</p>
+                      <p className="mt-2 max-w-md text-xs font-medium leading-relaxed text-slate-400">
+                        Tambahkan foto untuk memperjelas kondisi di lapangan. Format PNG atau JPG hingga 10MB.
+                      </p>
+                      <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-500">
+                        <Camera size={14} />
+                        Klik untuk unggah atau seret file
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-500">
+                      Aduan akan muncul di dashboard warga setelah dikirim.
+                    </div>
+                    <button
+                      type="submit"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-4 text-sm font-black text-white shadow-[0_18px_40px_-20px_rgba(15,23,42,0.45)] transition-all hover:-translate-y-0.5 hover:bg-blue-600"
+                    >
+                      <Send size={16} />
+                      Kirim Laporan
+                    </button>
                   </div>
                 </div>
-
-                {/* Submit */}
-                <button 
-                  type="submit"
-                  className="w-full py-5 bg-slate-900 text-white font-black rounded-2xl text-sm shadow-xl shadow-slate-900/20 hover:bg-red-600 transition-all flex items-center justify-center gap-3 group"
-                >
-                  <Send size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /> 
-                  Kirim Laporan
-                </button>
               </form>
-            </motion.div>
+            </motion.section>
           </div>
         ) : (
-          /* SUCCESS SCREEN */
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }} 
-            animate={{ scale: 1, opacity: 1 }}
-            className="max-w-md mx-auto text-center"
-          >
-            <div className="w-24 h-24 bg-emerald-50 text-emerald-600 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-lg shadow-emerald-500/10">
-              <CheckCircle2 size={48} strokeWidth={2.5} />
-            </div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Laporan Terkirim!</h2>
-            <p className="text-slate-500 text-sm mt-4 leading-relaxed font-medium">
-              Terima kasih atas partisipasi Anda. Laporan sedang diulas oleh petugas desa dan Anda akan menerima notifikasi setiap ada perubahan status.
-            </p>
-            <div className="mt-12 space-y-4">
-              <button 
-                onClick={() => navigate('/dashboard-warga')}
-                className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl text-sm"
-              >
-                Kembali ke Dashboard
-              </button>
-              <button 
-                onClick={() => setStep(1)}
-                className="w-full py-4 bg-white border border-slate-100 text-slate-400 font-black rounded-2xl text-sm hover:text-slate-900 transition-all"
-              >
-                Buat Laporan Lain
-              </button>
+          <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="mx-auto max-w-2xl">
+            <div className="overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-[0_28px_80px_-36px_rgba(15,23,42,0.28)]">
+              <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-8 py-8 text-white sm:px-10">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
+                  <CheckCircle2 size={32} />
+                </div>
+                <h2 className="mt-6 text-3xl font-black tracking-tight">Laporan terkirim</h2>
+                <p className="mt-2 max-w-xl text-sm leading-relaxed text-emerald-50/90">
+                  Terima kasih. Aduan Anda sudah masuk ke antrian penanganan dan akan tampil di dashboard warga saat status berubah.
+                </p>
+              </div>
+
+              <div className="space-y-5 p-8 sm:p-10">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Status awal</p>
+                    <p className="mt-2 text-lg font-black text-slate-950">Menunggu Tinjauan</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Prioritas</p>
+                    <p className="mt-2 text-lg font-black text-slate-950">Terdokumentasi</p>
+                  </div>
+                </div>
+
+                <div className="rounded-[2rem] border border-blue-100 bg-blue-50/60 p-5 text-sm leading-relaxed text-blue-800">
+                  Jika ada data tambahan, Anda bisa mengirim laporan baru atau kembali ke dashboard untuk memantau tindak lanjut.
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <button
+                    onClick={() => navigate("/dashboard-warga")}
+                    className="inline-flex flex-1 items-center justify-center rounded-2xl bg-slate-900 px-6 py-4 text-sm font-black text-white transition-colors hover:bg-blue-600"
+                  >
+                    Kembali ke Dashboard
+                  </button>
+                  <button
+                    onClick={() => setStep(1)}
+                    className="inline-flex flex-1 items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-4 text-sm font-black text-slate-600 transition-colors hover:border-blue-200 hover:text-blue-600"
+                  >
+                    Buat Laporan Lain
+                  </button>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}

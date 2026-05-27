@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import api from "../services/api";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -19,7 +20,8 @@ import {
   Filter,
   Download,
   Building2,
-  Settings
+  Settings,
+  Plus
 } from "lucide-react";
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
@@ -35,33 +37,22 @@ const FADE_UP = {
   })
 };
 
-// ─── DUMMY DATA ───────────────────────────────────────────────────────────────
-
-const SUMMARY_STATS = [
-  { label: "Total Penduduk", value: "4.821", sub: "+12 bulan ini", icon: Users, color: "blue" },
-  { label: "Pengajuan Surat", value: "42", sub: "18 butuh validasi", icon: Files, color: "indigo" },
-  { label: "Aduan Publik", value: "7", sub: "3 status darurat", icon: AlertTriangle, color: "amber" },
-  { label: "Realisasi Anggaran", value: "92%", sub: "Sesuai Target Q2", icon: BarChart3, color: "emerald" },
-];
-
-const PENDING_SURAT = [
-  { id: "SKD-841", nama: "Budi Santoso", tipe: "Keterangan Domisili", tgl: "10 menit lalu", wilayah: "RT 01 / RW 10" },
-  { id: "SKU-902", nama: "Siti Aminah", tipe: "Izin Usaha (SKU)", tgl: "25 menit lalu", wilayah: "RT 03 / RW 10" },
-  { id: "SKP-221", nama: "Rahmat Hidayat", tipe: "Keterangan Pindah", tgl: "1 jam lalu", wilayah: "RT 02 / RW 10" },
-];
-
 // ─── COMPONENTS ───────────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [activeMenu, setActiveTab] = useState("Overview");
+  
+  // 1. FIXED: Deklarasikan state loading agar tidak ReferenceError
+  const [loading, setLoading] = useState<boolean>(true);
+
   const [stats, setStats] = useState({
     totalWarga: 0,
-    adminRT: 0,
-    laporanAktif: 8,
-    suratPending: 12
+    laporanAktif: 0,
+    suratPending: 0
   });
-  const [loading, setLoading] = useState(true);
+  const [pendingSuratList, setPendingSuratList] = useState<any[]>([]);
+  const [financeData, setFinanceData] = useState({ income: 0, expense: 0, balance: 0 });
 
   useEffect(() => {
     fetchStats();
@@ -69,14 +60,47 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/v1/warga");
-      const data = res.data;
+      setLoading(true);
+
+      // Fetch users
+      const usersRes = await api.get("/users");
+      console.log("Data Users dari Java:", usersRes.data); // Untuk ngecek di F12 console
+      const usersData = usersRes.data.data || usersRes.data || [];
+      const adminCount = usersData.filter((w: any) => w.role === 'ADMIN_RT').length;
+
+      // Fetch surat
+      const suratRes = await api.get("/surat");
+      console.log("Data Surat dari Java:", suratRes.data);
+      const suratData = suratRes.data.data || suratRes.data || [];
+      const pendingSurat = suratData.filter((s: any) => s.status === 'PENDING' || s.status === 'pending');
+      
+      // Fetch reports
+      const reportsRes = await api.get("/reports");
+      console.log("Data Reports dari Java:", reportsRes.data);
+      const reportsData = reportsRes.data.data || reportsRes.data || [];
+      const pendingReports = reportsData.filter((r: any) => r.status === 'PENDING' || r.status === 'DIPROSES' || r.status === 'pending' || r.status === 'diproses');
+
+      // Fetch finance
+      let inc = 0, exp = 0, bal = 0;
+      try {
+        const finRes = await api.get("/admin/finance");
+        const finData = finRes.data.data || finRes.data;
+        inc = finData?.income || 0;
+        exp = finData?.expense || 0;
+        bal = finData?.balance || 0;
+      } catch (err) {
+        console.error("Finance API error:", err);
+      }
+
+      // Set data ke masing-masing state pembentuk dashboard
       setStats({
-        totalWarga: data.length,
-        adminRT: data.filter((w: any) => w.role === 'ADMIN_RT').length,
-        laporanAktif: 8,
-        suratPending: 12
+        totalWarga: usersData.length,
+        laporanAktif: pendingReports.length,
+        suratPending: pendingSurat.length
       });
+      setPendingSuratList(pendingSurat.slice(0, 5)); 
+      setFinanceData({ income: inc, expense: exp, balance: bal });
+
     } catch (err) {
       console.error("Error fetching stats:", err);
     } finally {
@@ -84,17 +108,22 @@ export default function AdminDashboard() {
     }
   };
 
+  const getFinancePercentage = () => {
+    if (financeData.income === 0) return 0;
+    const pct = (financeData.expense / financeData.income) * 100;
+    return Math.min(100, Math.max(0, pct)).toFixed(1);
+  };
+
   const SUMMARY_STATS = [
     { label: "Total Penduduk", value: stats.totalWarga, sub: "Data Terverifikasi", icon: Users, color: "blue" },
     { label: "Pengajuan Surat", value: stats.suratPending, sub: "Butuh Validasi", icon: Files, color: "indigo" },
     { label: "Aduan Publik", value: stats.laporanAktif, sub: "Status Aktif", icon: AlertTriangle, color: "amber" },
-    { label: "Admin RT", value: stats.adminRT, sub: "Pengelola Aktif", icon: ShieldCheck, color: "emerald" },
   ];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans antialiased flex">
       
-      {/* ── SIDEBAR (CLEAN WHITE) ── */}
+      {/* ── SIDEBAR ── */}
       <aside className="hidden lg:flex w-72 bg-white border-r border-slate-200 flex-col sticky top-0 h-screen z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
         <div className="p-8 flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/20">
@@ -114,7 +143,7 @@ export default function AdminDashboard() {
             { n: "Moderasi Lapor", i: AlertTriangle, p: "/admin/laporan" },
             { n: "Data Penduduk", i: Users, p: "/admin/penduduk" },
             { n: "Keuangan Desa", i: BarChart3, p: "/admin/keuangan" },
-            { n: "Pengaturan", i: Settings, p: "/admin/pengaturan" },  
+            { n: "Pengaturan", i: Settings, p: "/admin/pengaturan" },   
           ].map((item) => (
             <button
               key={item.n}
@@ -131,7 +160,7 @@ export default function AdminDashboard() {
               <item.i size={18} strokeWidth={activeMenu === item.n ? 3 : 2.5} />
               {item.n}
             </button>
-          ))}        
+          ))}         
         </nav>
 
         <div className="p-8">
@@ -238,31 +267,42 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {PENDING_SURAT.map((row, idx) => (
-                      <tr key={idx} className="group hover:bg-indigo-50/30 transition-colors">
-                        <td className="px-10 py-7">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xs font-black text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
-                              {row.nama.charAt(0)}
+                    {pendingSuratList.length > 0 ? (
+                      pendingSuratList.map((row, idx) => (
+                        <tr key={idx} className="group hover:bg-indigo-50/30 transition-colors">
+                          <td className="px-10 py-7">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xs font-black text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                                {row.user?.name ? row.user.name.charAt(0).toUpperCase() : '?'}
+                              </div>
+                              {/* FIXED: Menggunakan optional chaining (?.) agar aman dari crash */}
+                              <div>
+                                <p className="text-sm font-black text-slate-900">{row.user?.name || row.namaWarga || 'Anonim'}</p>
+                                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">
+                                  NIK: {row.user?.nik || row.nikWarga || '-'} • {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '-'}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm font-black text-slate-900">{row.nama}</p>
-                              <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">{row.wilayah} • {row.tgl}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-10 py-7">
-                          <span className="px-3 py-1.5 bg-slate-50 rounded-lg text-[11px] font-black text-slate-700 border border-slate-100">
-                            {row.tipe}
-                          </span>
-                        </td>
-                        <td className="px-10 py-7">
-                          <button className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100 uppercase tracking-widest">
-                            Validasi
-                          </button>
+                          </td>
+                          <td className="px-10 py-7">
+                            <span className="px-3 py-1.5 bg-slate-50 rounded-lg text-[11px] font-black text-slate-700 border border-slate-100">
+                              {row.jenisSurat?.replace(/_/g, ' ') || 'SURAT'}
+                            </span>
+                          </td>
+                          <td className="px-10 py-7">
+                            <button onClick={() => navigate('/admin/validasi')} className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100 uppercase tracking-widest">
+                              Validasi
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className="px-10 py-8 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">
+                          Tidak ada surat menunggu validasi
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -295,10 +335,10 @@ export default function AdminDashboard() {
                   <div>
                     <div className="flex justify-between text-[11px] font-black mb-3 px-1">
                       <span className="text-slate-400 uppercase tracking-widest">Realisasi Dana</span>
-                      <span className="text-emerald-600">92.4%</span>
+                      <span className="text-emerald-600">{getFinancePercentage()}%</span>
                     </div>
                     <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
-                      <motion.div initial={{ width: 0 }} animate={{ width: "92.4%" }} className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]" />
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${getFinancePercentage()}%` }} className="h-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]" />
                     </div>
                   </div>
                 </div>

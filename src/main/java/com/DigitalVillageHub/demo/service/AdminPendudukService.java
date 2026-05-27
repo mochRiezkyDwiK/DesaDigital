@@ -1,10 +1,12 @@
 package com.DigitalVillageHub.demo.service;
 
+import com.DigitalVillageHub.demo.dto.VerifikasiWargaDTO;
 import com.DigitalVillageHub.demo.model.entity.User;
 import com.DigitalVillageHub.demo.persistence.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -98,6 +100,34 @@ public class AdminPendudukService {
 
     public User rejectPenduduk(Long id, String alasanDitolak) {
         return verifyPenduduk(id, "REJECTED", alasanDitolak);
+    }
+
+    @Transactional
+    public User verifikasiBerkasWarga(Long id, VerifikasiWargaDTO dto) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Warga tidak ditemukan"));
+
+        String statusAkun = dto != null && dto.getStatusAkun() != null
+                ? dto.getStatusAkun().trim().toUpperCase()
+                : "";
+
+        if (statusAkun.isBlank()) {
+            throw new RuntimeException("Status akun wajib diisi");
+        }
+
+        if (!"VERIFIED".equals(statusAkun) && !"DATA_REJECTED".equals(statusAkun)) {
+            throw new RuntimeException("Status akun tidak valid. Gunakan VERIFIED atau DATA_REJECTED");
+        }
+
+        user.setStatusAkun(statusAkun);
+
+        if ("DATA_REJECTED".equals(statusAkun)) {
+            user.setAlasanDitolak(dto != null ? dto.getAlasanDitolak() : null);
+        } else {
+            user.setAlasanDitolak(null);
+        }
+
+        return userRepository.save(user);
     }
 
     public void deletePenduduk(Long id) {

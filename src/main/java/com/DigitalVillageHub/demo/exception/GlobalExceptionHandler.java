@@ -1,55 +1,67 @@
 package com.DigitalVillageHub.demo.exception;
 
-import com.DigitalVillageHub.demo.model.dto.ApiResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 
-@RestControllerAdvice
+import java.util.Map;
+
+@ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse<Object>> handleNotFound(ResourceNotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                ApiResponse.builder()
-                        .success(false)
-                        .message(e.getMessage())
-                        .data(null)
-                        .build()
-        );
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<?> handleMaxUploadSize(MaxUploadSizeExceededException e) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(Map.of(
+                "success", false,
+                "message", "Ukuran file terlalu besar. Silakan unggah gambar maksimal 10MB."
+        ));
     }
 
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ApiResponse<Object>> handleBadRequest(BadRequestException e) {
-        return ResponseEntity.badRequest().body(
-                ApiResponse.builder()
-                        .success(false)
-                        .message(e.getMessage())
-                        .data(null)
-                        .build()
-        );
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<?> handleMultipart(MultipartException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "success", false,
+                "message", "Gagal memproses upload berkas. Pastikan format file benar dan coba lagi."
+        ));
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ApiResponse<Object>> handleRuntimeException(RuntimeException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                ApiResponse.builder()
-                        .success(false)
-                        .message(e.getMessage() != null ? e.getMessage() : "Terjadi kesalahan pada server")
-                        .data(null)
-                        .build()
-        );
+    public ResponseEntity<?> handleRuntimeException(RuntimeException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "success", false,
+                "message", e.getMessage() != null ? e.getMessage() : "Terjadi kesalahan pada server"
+        ));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<?> handleNoResourceFound(NoResourceFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                "success", false,
+                "message", "Endpoint tidak ditemukan"
+        ));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Object>> handleException(Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                ApiResponse.builder()
-                        .success(false)
-                        .message("Kesalahan sistem internal")
-                        .data(null)
-                        .build()
-        );
+    public ResponseEntity<?> handleException(Exception e) {
+        log.error("Unhandled exception", e);
+
+        String detail = e.getClass().getSimpleName();
+        if (e.getMessage() != null && !e.getMessage().isBlank()) {
+            detail = detail + ": " + e.getMessage();
+        }
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "Kesalahan sistem internal",
+                "detail", detail
+        ));
     }
 }

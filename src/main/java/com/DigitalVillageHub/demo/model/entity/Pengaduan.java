@@ -1,13 +1,17 @@
 package com.DigitalVillageHub.demo.model.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "pengaduan")
@@ -16,29 +20,55 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Pengaduan extends LayananMasyarakat {
+@ToString(exclude = "warga")
+@EqualsAndHashCode(exclude = "warga")
+public class Pengaduan {
+
+    public enum PrioritasPengaduan {
+        RENDAH,
+        SEDANG,
+        TINGGI,
+        DARURAT
+    }
+
+    public enum StatusPengaduan {
+        PENDING,
+        DITUGASKAN,
+        DIPROSES,
+        SELESAI,
+        DITOLAK
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonProperty("kode_pengaduan")
-    @Column(name = "kode_pengaduan", unique = true, nullable = false)
+    @Column(name = "kode_pengaduan", nullable = false, unique = true, length = 50)
     private String kodePengaduan;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 150)
+    private String judul;
+
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String deskripsi;
+
+    @Column(nullable = false, length = 100)
     private String kategori;
 
-    @Column(nullable = false)
+    @Column(length = 255)
     private String lokasi;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private PrioritasPengaduan prioritas;
 
     @JsonProperty("foto_bukti")
-    @Column(name = "foto_bukti")
+    @Column(name = "foto_bukti", columnDefinition = "TEXT")
     private String fotoBukti;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private StatusPengaduan status;
 
     @JsonProperty("alasan_ditolak")
     @Column(name = "alasan_ditolak", columnDefinition = "TEXT")
@@ -52,26 +82,44 @@ public class Pengaduan extends LayananMasyarakat {
     @Column(name = "tanggal_selesai")
     private LocalDateTime tanggalSelesai;
 
+    @JsonProperty("created_at")
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @JsonProperty("updated_at")
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "warga_id", nullable = false)
-    @JsonIgnore
     private User warga;
 
-    @OneToMany(mappedBy = "pengaduan", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<PengaduanPetugas> petugasAssignments = new ArrayList<>();
-
-    @Override
-    public String getJenisLayanan() {
-        return "PENGADUAN_MASYARAKAT";
+    @PrePersist
+    public void prePersist() {
+        if (kodePengaduan == null || kodePengaduan.isBlank()) {
+            kodePengaduan = generateKodePengaduan();
+        }
+        if (prioritas == null) {
+            prioritas = PrioritasPengaduan.SEDANG;
+        }
+        if (status == null) {
+            status = StatusPengaduan.PENDING;
+        }
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (updatedAt == null) {
+            updatedAt = createdAt;
+        }
     }
 
-    @PrePersist
-    public void prePersistPengaduan() {
-        if (getStatus() == null) setStatus(PengaduanStatus.DIAJUKAN.name());
-        if (prioritas == null) prioritas = PrioritasPengaduan.SEDANG;
-        if (kodePengaduan == null || kodePengaduan.isBlank()) {
-            kodePengaduan = "PGD-" + System.currentTimeMillis();
-        }
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    private String generateKodePengaduan() {
+        return "PGD-" + LocalDateTime.now().toLocalDate().toString().replace("-", "")
+                + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 }

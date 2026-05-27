@@ -91,6 +91,29 @@ public class User {
     @JoinColumn(name = "no_kk", referencedColumnName = "no_kk", insertable = false, updatable = false)
     private Keluarga keluarga;
 
+    // ─── GATEWAY SINKRONISASI REACT FRONTEND (TIDAK MERUBAH DATABASE) ───
+
+    /**
+     * Menyediakan field "name" otomatis di JSON response.
+     * Mengatasi masalah 'row.user.name' yang bernilai kosong/undefined di frontend React.
+     */
+    @JsonProperty("name")
+    public String getName() {
+        return this.namaLengkap;
+    }
+
+    /**
+     * Jika role di database adalah ADMIN, method ini akan mengirim string "ADMIN_RT" ke JSON.
+     * Mengatasi filter 'w.role === "ADMIN_RT"' di frontend agar angka jumlah admin tidak 0.
+     */
+    @JsonProperty("role")
+    public String getRoleString() {
+        if (this.role == Role.ADMIN) {
+            return "ADMIN_RT";
+        }
+        return this.role != null ? this.role.name() : "WARGA";
+    }
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = LocalDateTime.now();
