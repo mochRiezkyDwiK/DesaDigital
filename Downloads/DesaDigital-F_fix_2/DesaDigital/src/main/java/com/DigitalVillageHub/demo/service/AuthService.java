@@ -59,7 +59,7 @@ public class AuthService {
                 .password(BCrypt.hashpw(request.getPassword(), BCrypt.gensalt()))
                 .noHp(request.getNoHp())
                 .role(User.Role.WARGA)
-            .statusAkun("PENDING_ADMIN")
+            .statusAkun("INCOMPLETE")
                 .build();
 
         userRepository.save(user);
@@ -90,9 +90,8 @@ public class AuthService {
         }
 
         String statusAkun = user.getStatusAkun() != null ? user.getStatusAkun().trim().toUpperCase() : "";
-        if ("PENDING_ADMIN".equals(statusAkun)) {
-            throw new RuntimeException("Pendaftaran Anda belum disetujui Admin RT/RW.");
-        }
+        // Biarkan pengguna dengan status PENDING_ADMIN login untuk melanjutkan proses onboarding.
+        // Namun jika pendaftaran benar-benar ditolak oleh admin, tetap tolak akses.
         if ("REJECTED_ADMIN".equals(statusAkun)) {
             throw new RuntimeException("Pendaftaran Anda ditolak Admin RT/RW. Silakan hubungi Admin untuk informasi lebih lanjut.");
         }

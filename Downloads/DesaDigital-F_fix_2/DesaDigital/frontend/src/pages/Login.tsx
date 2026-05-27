@@ -111,10 +111,22 @@ export default function Login() {
 
           // Ekstraksi data user baik dari structure bersarang (.data) maupun langsung (.user)
           const loggedUser = resData.data?.user || resData.user;
-          const statusAkunActual = resData.data?.statusAkun || loggedUser?.statusAkun || loggedUser?.status_akun || "PENDING_PROFILE";
+          let statusAkunActual = resData.data?.statusAkun || loggedUser?.statusAkun || loggedUser?.status_akun || "INCOMPLETE";
           const roleActual = loggedUser?.role === "ADMIN_RT" ? "ADMIN" : (loggedUser?.role || "WARGA");
 
-          // Kunci variabel penting onboarding ke memori lokal browser Moch Riezky
+          // Normalisasi beberapa varian status dari backend agar routing onboarding konsisten
+          const normalizeStatus = (raw: string) => {
+            const s = (raw || "").toString().trim().toUpperCase();
+            if (s.includes("VERIFIED")) return "VERIFIED";
+            if (s === "INCOMPLETE") return "INCOMPLETE";
+            if (s === "PENDING" || s === "PENDING_ADMIN" || s === "PENDING_VERIFICATION") return "PENDING";
+            if (s === "REJECTED" || s === "REJECTED_ADMIN") return "REJECTED";
+            return s || "INCOMPLETE";
+          };
+
+          statusAkunActual = normalizeStatus(statusAkunActual);
+
+          // Kunci variabel penting onboarding ke memori lokal browser
           localStorage.setItem("token", resData.token);
           localStorage.setItem("role", roleActual);
           localStorage.setItem("statusAkun", statusAkunActual);

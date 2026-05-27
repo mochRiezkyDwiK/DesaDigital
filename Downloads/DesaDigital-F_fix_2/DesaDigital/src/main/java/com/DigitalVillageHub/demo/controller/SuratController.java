@@ -1,15 +1,17 @@
 package com.DigitalVillageHub.demo.controller;
 
+import com.DigitalVillageHub.demo.model.dto.AjukanSuratRequestDTO;
 import com.DigitalVillageHub.demo.model.entity.Surat;
 import com.DigitalVillageHub.demo.service.SuratService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/surat")
+@RequestMapping({"/api/v1/surat", "/api/v1/warga/surat"})
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:5173")
 public class SuratController {
@@ -63,6 +65,26 @@ public class SuratController {
                     "success", false,
                     "message", e.getMessage()
             ));
+        }
+    }
+
+    @PostMapping("/ajukan")
+    public ResponseEntity<?> handleAjukanSurat(@RequestBody AjukanSuratRequestDTO requestDTO) {
+        try {
+            Surat savedSurat = suratService.ajukanSuratWarga(requestDTO);
+
+            HashMap<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Permohonan surat resmi berhasil diajukan!");
+            response.put("data", savedSurat);
+
+            return ResponseEntity.status(201).body(response);
+        } catch (RuntimeException e) {
+            HashMap<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+
+            return ResponseEntity.badRequest().body(response);
         }
     }
 

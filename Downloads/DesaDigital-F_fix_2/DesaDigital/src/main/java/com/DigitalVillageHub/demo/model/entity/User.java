@@ -118,6 +118,6 @@ public class User {
     public void prePersist() {
         if (createdAt == null) createdAt = LocalDateTime.now();
         if (role == null) role = Role.WARGA;
-        if (statusAkun == null) statusAkun = "PENDING_ADMIN";
+        if (statusAkun == null) statusAkun = "INCOMPLETE";
     }
 }

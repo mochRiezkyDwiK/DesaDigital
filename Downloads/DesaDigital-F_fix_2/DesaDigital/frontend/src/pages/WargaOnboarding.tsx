@@ -22,26 +22,7 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
   const [status, setStatus] = useState(userStatus);
   const [alasanDitolak, setAlasanDitolak] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isFetchingProfile, setIsFetchingProfile] = useState(true);
-
-  // Sinkronisasi nama status lama/baru agar UI tidak kosong
-  const normalizedStatus = (raw: string) => {
-    switch ((raw || "").toUpperCase()) {
-      // Lama -> Baru
-      case "INCOMPLETE":
-        return "PENDING_PROFILE";
-      case "REJECTED":
-        return "DATA_REJECTED";
-      case "PENDING":
-        return "PENDING_VERIFICATION";
-      case "VERIFIED_TETAP":
-      case "VERIFIED_PENDATANG":
-        return "VERIFIED";
-      default:
-        return raw;
-    }
-  };
 
   // State Form Mandiri Warga
   const [formData, setFormData] = useState({
@@ -53,47 +34,55 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
 
   // 1. Ambil Profil Terbaru untuk Memastikan Status Akun Riil dari DB
   const checkCurrentStatus = async () => {
-    setIsRefreshing(true);
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get("http://localhost:5000/api/v1/auth/profile", {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
-        const currentStatus = normalizedStatus(res.data.data.status_akun);
+        const raw = res.data.data.status_akun;
+        const normalize = (s: string) => {
+          const v = (s || "").toString().trim().toUpperCase();
+          if (v.includes("VERIFIED")) return "VERIFIED";
+          if (v === "INCOMPLETE") return "INCOMPLETE";
+          if (v === "PENDING" || v === "PENDING_ADMIN" || v === "PENDING_VERIFICATION") return "PENDING";
+          if (v === "REJECTED" || v === "REJECTED_ADMIN") return "REJECTED";
+          return v || "INCOMPLETE";
+        };
+
+        const currentStatus = normalize(raw);
         setStatus(currentStatus);
         setAlasanDitolak(res.data.data.alasan_ditolak || "");
 
-        // Persist agar status tetap konsisten saat reload / guard routing
+        // persist ke localStorage agar routing konsisten
         localStorage.setItem("statusAkun", currentStatus);
-        
+
         // Jika ternyata sudah di-acc Admin saat di-refresh
         if (currentStatus === "VERIFIED") {
           onVerified();
         }
       }
     } catch (error) {
-      const message =
-        error.response?.data?.detail ||
-        error.response?.data?.message ||
-        "Gagal memuat status akun terbaru";
-      alert(message);
       console.error("Gagal sinkronisasi status verifikasi:", error);
     } finally {
       setIsFetchingProfile(false);
-      setIsRefreshing(false);
     }
   };
 
   useEffect(() => {
+    // pastikan status awal dari prop juga ternormalisasi
+    const normalizeProp = (raw: string) => {
+      const v = (raw || "").toString().trim().toUpperCase();
+      if (v.includes("VERIFIED")) return "VERIFIED";
+      if (v === "INCOMPLETE") return "INCOMPLETE";
+      if (v === "PENDING" || v === "PENDING_ADMIN" || v === "PENDING_VERIFICATION") return "PENDING";
+      if (v === "REJECTED" || v === "REJECTED_ADMIN") return "REJECTED";
+      return v || "INCOMPLETE";
+    };
+
+    setStatus(normalizeProp(userStatus));
     checkCurrentStatus();
   }, []);
-
-  useEffect(() => {
-    // pastikan status awal dari App/localStorage juga ternormalisasi
-    setStatus(normalizedStatus(userStatus));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userStatus]);
 
   // 2. Handle Kirim Data Formulir Mandiri
   const handleSubmit = async (e: React.FormEvent) => {
@@ -106,7 +95,7 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
     data.append("no_kk", formData.no_kk);
     data.append("status_hubungan", formData.status_hubungan);
     data.append("status_tinggal", formData.status_tinggal);
-    data.append("evidence", formData.foto_ktp);
+    data.append("foto_ktp", formData.foto_ktp);
 
     try {
       const token = localStorage.getItem("token");
@@ -119,8 +108,7 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
 
       if (res.data.success) {
         alert("Data formulir berhasil dikirim ke Admin!");
-        setStatus("PENDING_VERIFICATION"); // Ubah UI ke mode stand-by/menunggu
-        localStorage.setItem("statusAkun", "PENDING_VERIFICATION");
+        setStatus("PENDING"); // Ubah UI ke mode stand-by/menunggu
       }
     } catch (error: any) {
       alert(error.response?.data?.message || "Gagal mengirim formulir onboarding");
@@ -132,8 +120,6 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
   // 3. Fungsi Logout (Jika warga ingin keluar akun)
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("statusAkun");
     window.location.href = "/login";
   };
 
@@ -160,22 +146,22 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
       <div className="w-full max-w-2xl bg-white rounded-[3rem] border border-slate-100 shadow-xl p-12 relative overflow-hidden">
         
         {/* ─── KONDISI 1: INCOMPLETE & REJECTED (FORMULIR ISI DATA) ─── */}
-        {(status === "PENDING_PROFILE" || status === "DATA_REJECTED") && (
+        {(status === "INCOMPLETE" || status === "REJECTED") && (
           <div>
             <div className="flex items-center gap-4 mb-8">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg ${status === 'DATA_REJECTED' ? 'bg-red-500 shadow-red-500/20' : 'bg-blue-600 shadow-blue-600/20'}`}>
-                {status === 'DATA_REJECTED' ? <XCircle size={26} /> : <ShieldAlert size={26} />}
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg ${status === 'REJECTED' ? 'bg-red-500 shadow-red-500/20' : 'bg-blue-600 shadow-blue-600/20'}`}>
+                {status === 'REJECTED' ? <XCircle size={26} /> : <ShieldAlert size={26} />}
               </div>
               <div>
                 <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none">
-                  {status === 'DATA_REJECTED' ? 'Verifikasi Data Ditolak' : 'Lengkapi Data Kependudukan'}
+                  {status === 'REJECTED' ? 'Verifikasi Data Ditolak' : 'Verifikasi Akun Warga'}
                 </h1>
                 <p className="text-xs font-bold text-slate-400 mt-1.5 uppercase tracking-wider">Formulir Kependudukan Mandiri DigiDesa</p>
               </div>
             </div>
 
             {/* Alertbox khusus jika statusnya REJECTED (Ditolak Admin) */}
-            {status === "DATA_REJECTED" && (
+            {status === "REJECTED" && (
               <div className="mb-8 p-6 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3.5">
                 <ShieldAlert className="text-red-500 shrink-0 mt-0.5" size={18} />
                 <div>
@@ -268,7 +254,7 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
         )}
 
         {/* ─── KONDISI 2: PENDING (MENUNGGU ACC ADMIN) ─── */}
-        {status === "PENDING_VERIFICATION" && (
+        {status === "PENDING" && (
           <div className="py-8 flex flex-col items-center text-center">
             <div className="w-20 h-20 bg-amber-50 text-amber-500 rounded-[2rem] flex items-center justify-center shadow-xl shadow-amber-500/10 mb-8 border border-amber-100 animate-pulse">
               <Clock size={36} strokeWidth={2.5} />
@@ -291,10 +277,8 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
 
             <button 
               onClick={checkCurrentStatus}
-              disabled={isRefreshing}
               className="mt-10 px-8 py-3.5 bg-slate-900 hover:bg-blue-600 text-white text-[11px] font-black uppercase tracking-widest rounded-xl shadow-md transition-all flex items-center gap-2"
             >
-              {isRefreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               Refresh Status Akun
             </button>
           </div>

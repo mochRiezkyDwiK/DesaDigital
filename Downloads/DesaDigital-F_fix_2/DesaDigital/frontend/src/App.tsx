@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, type ReactElement } from "react";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import DashboardWarga from "./pages/DashboardWarga";
@@ -18,7 +18,7 @@ import AdminPengaturan from "./pages/AdminPengaturan";
 import WargaOnboarding from "./pages/WargaOnboarding"; // Import Komponen Onboarding Kamu
 
 // ─── GATEKEEPER IMPLEMENTATION (SYSTEM ANALYST GUARD) ───
-const ProtectedRoute = ({ children, requiredRole }: { children: JSX.Element, requiredRole?: string }) => {
+const ProtectedRoute = ({ children, requiredRole }: { children: ReactElement, requiredRole?: string }) => {
   const token = localStorage.getItem("token");
   const userRole = localStorage.getItem("role");
   const statusAkun = localStorage.getItem("statusAkun") || "PENDING_PROFILE";
@@ -58,7 +58,7 @@ const OnboardingRoute = ({
       onVerified={() => {
         localStorage.setItem("statusAkun", "VERIFIED");
         setCurrentStatus("VERIFIED");
-        window.location.href = "/dashboard-warga";
+        globalThis.location.href = "/dashboard-warga";
       }}
     />
   );
