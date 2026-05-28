@@ -1,5 +1,6 @@
 package com.DigitalVillageHub.demo.service;
 
+import com.DigitalVillageHub.demo.config.JwtService;
 import com.DigitalVillageHub.demo.model.dto.AuthResponse;
 import com.DigitalVillageHub.demo.model.dto.LoginRequest;
 import com.DigitalVillageHub.demo.model.dto.OnboardingRequestDTO;
@@ -8,6 +9,7 @@ import com.DigitalVillageHub.demo.model.entity.Keluarga;
 import com.DigitalVillageHub.demo.model.entity.User;
 import com.DigitalVillageHub.demo.persistence.KeluargaRepository;
 import com.DigitalVillageHub.demo.persistence.UserRepository;
+import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -29,6 +31,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final KeluargaRepository keluargaRepository;
+    private final JwtService jwtService;
 
     public AuthResponse register(RegisterRequest request) {
 
@@ -96,10 +99,17 @@ public class AuthService {
             throw new RuntimeException("Pendaftaran Anda ditolak Admin RT/RW. Silakan hubungi Admin untuk informasi lebih lanjut.");
         }
 
+        String token;
+        try {
+            token = jwtService.generateToken(user);
+        } catch (JOSEException e) {
+            throw new RuntimeException("Gagal membuat token autentikasi. Coba lagi.");
+        }
+
         return AuthResponse.builder()
                 .success(true)
                 .message("Login Berhasil!")
-                .token("DEV-TOKEN-" + user.getId())
+                .token(token)
                 .user(Map.of(
                         "id", user.getId(),
                         "nik", user.getNik(),

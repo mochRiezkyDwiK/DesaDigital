@@ -1,8 +1,8 @@
 package com.DigitalVillageHub.demo.controller;
 
-import com.DigitalVillageHub.demo.model.dto.LoginRequest;
 import com.DigitalVillageHub.demo.model.dto.OnboardingRequestDTO;
 import com.DigitalVillageHub.demo.model.dto.RegisterRequest;
+import com.DigitalVillageHub.demo.model.dto.LoginRequest;
 import com.DigitalVillageHub.demo.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -31,72 +31,36 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    /**
+     * Mendapatkan profil user yang sedang login.
+     * Authentication diisi oleh JwtAuthenticationFilter sebelum request ini masuk.
+     */
     @GetMapping("/profile")
-    public ResponseEntity<?> profile(
-            Authentication authentication,
-            @RequestHeader(value = "Authorization", required = false) String authorization
-    ) {
-        String username = resolveUsername(authentication, authorization);
-        if (username == null || username.isBlank()) {
+    public ResponseEntity<?> profile(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "success", false,
                     "message", "Tidak terautentikasi. Silakan login ulang."
             ));
         }
-
-        return ResponseEntity.ok(authService.getProfile(username));
+        return ResponseEntity.ok(authService.getProfile(authentication.getName()));
     }
 
+    /**
+     * Submit data onboarding (kelengkapan berkas kependudukan).
+     * Authentication diisi oleh JwtAuthenticationFilter sebelum request ini masuk.
+     */
     @PostMapping(value = "/onboarding", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> submitOnboarding(
             Authentication authentication,
-            @ModelAttribute OnboardingRequestDTO request,
-            @RequestHeader(value = "Authorization", required = false) String authorization
+            @ModelAttribute OnboardingRequestDTO request
     ) {
-        String username = resolveUsername(authentication, authorization);
-        if (username == null || username.isBlank()) {
+        if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "success", false,
                     "message", "Tidak terautentikasi. Silakan login ulang."
             ));
         }
-
-        return ResponseEntity.ok(authService.submitOnboarding(username, request));
-    }
-
-    private String resolveUsername(Authentication authentication, String authorization) {
-        if (authentication != null && authentication.isAuthenticated() && authentication.getName() != null) {
-            return authentication.getName();
-        }
-
-        // Fallback kompatibilitas: token DEV-TOKEN-{id} yang saat ini dipakai di project.
-        // Jika kamu sudah mengaktifkan JWT sesungguhnya, blok ini bisa dihapus.
-        Long userId = parseDevTokenUserId(authorization);
-        if (userId == null) {
-            return null;
-        }
-
-        // Identifier bisa berupa userId numerik; AuthService akan fallback ke findById.
-        return String.valueOf(userId);
-    }
-
-    private Long parseDevTokenUserId(String authorization) {
-        if (authorization == null || authorization.isBlank()) {
-            return null;
-        }
-        String trimmed = authorization.trim();
-        if (!trimmed.startsWith("Bearer ")) {
-            return null;
-        }
-        String token = trimmed.substring("Bearer ".length());
-        if (!token.startsWith("DEV-TOKEN-")) {
-            return null;
-        }
-        String idPart = token.substring("DEV-TOKEN-".length());
-        try {
-            return Long.parseLong(idPart);
-        } catch (NumberFormatException e) {
-            return null;
-        }
+        return ResponseEntity.ok(authService.submitOnboarding(authentication.getName(), request));
     }
 }
