@@ -24,7 +24,7 @@ public class WargaPengaduanController {
     private final PengaduanService pengaduanService;
 
     @PostMapping
-        public ResponseEntity<Map<String, Object>> ajukanLaporan(@RequestBody AjukanPengaduanRequestDTO request) {
+    public ResponseEntity<Map<String, Object>> ajukanLaporan(@RequestBody AjukanPengaduanRequestDTO request) {
         try {
             PengaduanResponseDTO data = pengaduanService.ajukanLaporan(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
@@ -40,57 +40,31 @@ public class WargaPengaduanController {
         }
     }
 
+    /**
+     * Mengambil riwayat pengaduan milik warga yang sedang login.
+     * Authentication diisi oleh JwtAuthenticationFilter — principal = userId.
+     */
     @GetMapping("/riwayat")
-        public ResponseEntity<Map<String, Object>> riwayatPengaduan(
-            Authentication authentication,
-            @RequestHeader(value = "Authorization", required = false) String authorization
-    ) {
+    public ResponseEntity<Map<String, Object>> riwayatPengaduan(Authentication authentication) {
         try {
-            String principal = resolvePrincipal(authentication, authorization);
-            if (principal == null || principal.isBlank()) {
+            if (authentication == null || !authentication.isAuthenticated()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                         SUCCESS, false,
                         MESSAGE, "Tidak terautentikasi. Silakan login ulang."
                 ));
             }
 
+            Long userId = Long.parseLong(authentication.getName());
+
             return ResponseEntity.ok(Map.of(
                     SUCCESS, true,
-                    DATA, pengaduanService.getRiwayatWargaByPrincipal(principal)
+                    DATA, pengaduanService.getRiwayatWargaByUserId(userId)
             ));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of(
                     SUCCESS, false,
                     MESSAGE, e.getMessage()
             ));
-        }
-    }
-
-    private String resolvePrincipal(Authentication authentication, String authorization) {
-        if (authentication != null && authentication.isAuthenticated() && authentication.getName() != null) {
-            return authentication.getName();
-        }
-
-        if (authorization == null || authorization.isBlank()) {
-            return null;
-        }
-
-        String trimmed = authorization.trim();
-        if (!trimmed.startsWith("Bearer ")) {
-            return null;
-        }
-
-        String token = trimmed.substring("Bearer ".length());
-        if (!token.startsWith("DEV-TOKEN-")) {
-            return null;
-        }
-
-        String idPart = token.substring("DEV-TOKEN-".length());
-        try {
-            Long.parseLong(idPart);
-            return idPart;
-        } catch (NumberFormatException e) {
-            return null;
         }
     }
 }

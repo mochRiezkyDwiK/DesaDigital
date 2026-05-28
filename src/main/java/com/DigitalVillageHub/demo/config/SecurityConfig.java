@@ -19,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final DevTokenAuthenticationFilter devTokenFilter;
+    private final JwtAuthenticationFilter jwtAuthFilter;
     private final SecurityAccessDeniedHandler accessDeniedHandler;
 
     @Bean
@@ -47,8 +47,8 @@ public class SecurityConfig {
                 // 4. Semua path non-API (frontend SPA, static resources) — publik
                 .anyRequest().permitAll()
             )
-            // Masukkan filter kustom SEBELUM filter username/password bawaan Spring
-            .addFilterBefore(devTokenFilter, UsernamePasswordAuthenticationFilter.class);
+            // JWT filter menggantikan DEV-TOKEN filter lama
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
