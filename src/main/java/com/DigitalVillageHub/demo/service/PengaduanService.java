@@ -73,8 +73,9 @@ public class PengaduanService {
         }
     }
 
-    public List<PengaduanResponseDTO> getRiwayatWargaByPrincipal(String principal) {
-        User warga = resolveCurrentUser(principal);
+    public List<PengaduanResponseDTO> getRiwayatWargaByUserId(Long userId) {
+        User warga = userRepository.findById(userId)
+                .orElseThrow(() -> notFound("Warga", "ID " + userId));
         return pengaduanRepository.findByWargaOrderByCreatedAtDesc(warga)
                 .stream()
                 .map(this::toResponseDTO)
@@ -187,22 +188,7 @@ public class PengaduanService {
         }
     }
 
-    private User resolveCurrentUser(String principal) {
-        if (principal == null || principal.isBlank()) {
-            throw new IllegalArgumentException("Tidak ada identitas warga yang terautentikasi");
-        }
 
-        String trimmed = principal.trim();
-        if (trimmed.matches("\\d+")) {
-            Long userId = Long.parseLong(trimmed);
-            return userRepository.findById(userId)
-                    .orElseThrow(() -> notFound("Warga", "ID " + userId));
-        }
-
-        return userRepository.findByUsername(trimmed)
-                .or(() -> userRepository.findByNik(trimmed))
-                .orElseThrow(() -> notFound("Warga", "identitas " + trimmed));
-    }
 
     private IllegalArgumentException notFound(String entityName, String identifier) {
         return new IllegalArgumentException(entityName + " dengan " + identifier + ENTITY_NOT_FOUND_SUFFIX);

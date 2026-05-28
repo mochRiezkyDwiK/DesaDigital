@@ -54,9 +54,11 @@ public class WargaPengaduanController {
                 ));
             }
 
+            Long userId = Long.parseLong(authentication.getName());
+
             return ResponseEntity.ok(Map.of(
                     SUCCESS, true,
-                    DATA, pengaduanService.getRiwayatWargaByPrincipal(authentication.getName())
+                    DATA, pengaduanService.getRiwayatWargaByUserId(userId)
             ));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of(

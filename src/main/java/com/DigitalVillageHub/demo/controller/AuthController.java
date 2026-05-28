@@ -43,7 +43,8 @@ public class AuthController {
                     "message", "Tidak terautentikasi. Silakan login ulang."
             ));
         }
-        return ResponseEntity.ok(authService.getProfile(authentication.getName()));
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseEntity.ok(authService.getProfile(userId));
     }
 
     /**
@@ -61,6 +62,7 @@ public class AuthController {
                     "message", "Tidak terautentikasi. Silakan login ulang."
             ));
         }
-        return ResponseEntity.ok(authService.submitOnboarding(authentication.getName(), request));
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseEntity.ok(authService.submitOnboarding(userId, request));
     }
 }

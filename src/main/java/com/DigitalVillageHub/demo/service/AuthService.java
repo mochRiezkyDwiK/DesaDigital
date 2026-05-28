@@ -121,32 +121,33 @@ public class AuthService {
                 .build();
     }
 
-        public AuthResponse getProfile(String identifier) {
-        User user = resolveUserForOnboarding(identifier);
+    public AuthResponse getProfile(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User tidak ditemukan"));
 
-            LinkedHashMap<String, Object> data = new LinkedHashMap<>();
-            data.put("id", user.getId());
-            data.put("nik", user.getNik());
-            data.put("nama_lengkap", user.getNamaLengkap());
-            data.put("username", user.getUsername());
-            data.put("role", user.getRole() != null ? user.getRole().name() : null);
-            data.put("status_akun", user.getStatusAkun());
-            data.put("alasan_ditolak", user.getAlasanDitolak());
-            data.put("no_kk", user.getNoKk());
-            data.put("status_hubungan", user.getStatusHubungan());
-            data.put("status_tinggal", user.getStatusTinggal());
-            data.put("foto_ktp", user.getFotoKtp());
+        LinkedHashMap<String, Object> data = new LinkedHashMap<>();
+        data.put("id", user.getId());
+        data.put("nik", user.getNik());
+        data.put("nama_lengkap", user.getNamaLengkap());
+        data.put("username", user.getUsername());
+        data.put("role", user.getRole() != null ? user.getRole().name() : null);
+        data.put("status_akun", user.getStatusAkun());
+        data.put("alasan_ditolak", user.getAlasanDitolak());
+        data.put("no_kk", user.getNoKk());
+        data.put("status_hubungan", user.getStatusHubungan());
+        data.put("status_tinggal", user.getStatusTinggal());
+        data.put("foto_ktp", user.getFotoKtp());
 
         return AuthResponse.builder()
-            .success(true)
-            .message("Profil berhasil diambil")
+                .success(true)
+                .message("Profil berhasil diambil")
                 .data(data)
-            .build();
-        }
+                .build();
+    }
 
     @Transactional
-    public AuthResponse submitOnboarding(String username, OnboardingRequestDTO request) {
-        if (username == null || username.isBlank()) {
+    public AuthResponse submitOnboarding(Long userId, OnboardingRequestDTO request) {
+        if (userId == null) {
             throw new RuntimeException("Tidak terautentikasi. Silakan login ulang.");
         }
 
@@ -178,7 +179,8 @@ public class AuthService {
             throw new RuntimeException("Silakan unggah berkas KTP/KK terlebih dahulu");
         }
 
-        User user = resolveUserForOnboarding(username);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User tidak ditemukan"));
 
         // Pastikan KK sudah ada di tabel keluarga untuk memenuhi foreign key user.no_kk -> keluarga.no_kk
         ensureKeluargaExists(noKk);
@@ -225,22 +227,7 @@ public class AuthService {
         }
     }
 
-    private User resolveUserForOnboarding(String identifier) {
-        // 1) Normal path: identifier adalah NIK atau username
-        var byNikOrUsername = userRepository.findFirstByNikOrUsername(identifier, identifier);
-        if (byNikOrUsername.isPresent()) {
-            return byNikOrUsername.get();
-        }
 
-        // 2) Fallback: identifier adalah userId numerik (kompatibilitas DEV-TOKEN-{id})
-        try {
-            Long userId = Long.parseLong(identifier);
-            return userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User tidak ditemukan"));
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("User tidak ditemukan");
-        }
-    }
 
     private String storeKtpEvidence(String nik, MultipartFile evidence) {
         try {
