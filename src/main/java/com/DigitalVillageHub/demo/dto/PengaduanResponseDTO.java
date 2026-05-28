@@ -55,4 +55,13 @@ public class PengaduanResponseDTO {
 
     @JsonProperty("pelapor_nama")
     private String pelaporNama;
+
+    @JsonProperty("petugas_id")
+    private Long petugasId;
+
+    @JsonProperty("petugas_nama")
+    private String petugasNama;
+
+    @JsonProperty("catatan_petugas")
+    private String catatanPetugas;
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -26,10 +26,11 @@ import {
   Download,
   X,
   Eye,
-  Info
+  Info,
+  MapPin
 } from "lucide-react";
 
-// ─── CONFIGURATION ────────────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ CONFIGURATION ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const EASE_SPRING = [0.16, 1, 0.3, 1] as const;
 
@@ -41,17 +42,6 @@ const FADE_UP = {
     transition: { duration: 0.8, delay: i * 0.1, ease: EASE_SPRING }
   })
 };
-
-const QUICK_STATS = [
-  { label: "Surat Aktif", value: "2", icon: FileText, trend: "+1 Baru", color: "blue", path: "/layanan" },
-  { label: "Laporan", value: "0", icon: MessageSquare, trend: "Clear", color: "indigo", path: "/lapor" },
-  { label: "Poin Warga", value: "1.250", icon: Sparkles, trend: "Top 5%", color: "violet", path: "#" },
-];
-
-const DUMMY_SURAT_LIST = [
-  { id: "SKD-081", noSurat: "SKD-081", tipe: "Keterangan Domisili", status: "PENDING", tgl: "28 Apr 2026", progress: 65 },
-  { id: "SKU-042", noSurat: "SKU-042", tipe: "Keterangan Usaha", status: "SELESAI", tgl: "20 Apr 2026", progress: 100 },
-];
 
 const STEP_ICON_STYLES: Record<string, string> = {
   blue: "text-blue-600",
@@ -69,6 +59,21 @@ type SuratItem = {
   keperluan?: string;
   alasanDitolak?: string;
   dokumenUrl?: string;
+};
+
+// TAMBAHAN TYPE TANPA MENGURANGI YANG LAIN
+type PengaduanItem = {
+  id: number;
+  kodePengaduan: string;
+  judul: string;
+  kategori: string;
+  deskripsi: string;
+  lokasi: string | null;
+  status: string;
+  prioritas: string;
+  alasanDitolak: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 const normalizeStatus = (status?: string) => {
@@ -98,7 +103,7 @@ const getStatusLabel = (status?: string) => {
   const normalized = normalizeStatus(status);
   if (normalized === "SELESAI") return "Selesai";
   if (normalized === "DITOLAK") return "Ditolak";
-  if (normalized === "PROSES") return "Diproses";
+  if (normalized === "PROSES" || normalized === "DITUGASKAN" || normalized === "DIPROSES") return "Diproses";
   return "Menunggu";
 };
 
@@ -120,10 +125,14 @@ const getStatusBadgeClass = (status?: string) => {
 export default function DashboardWarga() {
   const [activeTab, setActiveTab] = useState("Ringkasan");
   const [userData, setUserData] = useState<any>(null);
-  const [suratList, setSuratList] = useState<SuratItem[]>(DUMMY_SURAT_LIST);
+  const [suratList, setSuratList] = useState<SuratItem[]>([]);
   const [isLoadingSurat, setIsLoadingSurat] = useState(false);
   
-  // State modal peninjauan detail lokal warga
+  // HANYA MENAMBAHKAN STATE PENGADUAN DI SINI
+  const [pengaduanList, setPengaduanList] = useState<PengaduanItem[]>([]);
+  const [isLoadingPengaduan, setIsLoadingPengaduan] = useState(false);
+  const [showPengaduanSection, setShowPengaduanSection] = useState(false);
+  
   const [selectedSuratModal, setSelectedSuratModal] = useState<SuratItem | null>(null);
   const modalPrintRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
@@ -161,6 +170,18 @@ export default function DashboardWarga() {
             setSuratList([]);
           })
           .finally(() => setIsLoadingSurat(false));
+
+        // HANYA NYELIPIN FETCH RIAWAYAT PENGADUAN DI SINI TANPA MERUSAK LAINNYA
+        setIsLoadingPengaduan(true);
+        api.get("/warga/pengaduan/riwayat")
+          .then((res) => {
+            if (res.data?.success && Array.isArray(res.data?.data)) {
+              setPengaduanList(res.data.data);
+            }
+          })
+          .catch((err) => console.error("Failed to fetch pengaduan", err))
+          .finally(() => setIsLoadingPengaduan(false));
+
       } catch (e) {
         console.error("Gagal membaca data user", e);
         setSuratList([]);
@@ -172,7 +193,6 @@ export default function DashboardWarga() {
     loadDataSurat();
   }, []);
 
-  // Fungsi konversi pratinjau html lokal warga ke PDF mandiri
   const handleWargaDownloadPDF = async () => {
     if (!modalPrintRef.current || !selectedSuratModal) {
       toast.error("Pratinjau dokumen belum sepenuhnya dimuat.");
@@ -223,7 +243,7 @@ export default function DashboardWarga() {
             </div>
             <div>
               <h4 className="font-black text-slate-800 text-base tracking-tight">{surat.tipe}</h4>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Ref: {surat.noSurat || surat.id} • {surat.tgl}</p>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Ref: {surat.noSurat || surat.id} ΓÇó {surat.tgl}</p>
             </div>
           </div>
           <div className="flex items-center gap-8">
@@ -264,7 +284,6 @@ export default function DashboardWarga() {
           </div>
         )}
 
-        {/* RESTRUKTURISASI INTERAKTIF AKSES DOWNLOAD DAN PRATINJAU WARGA */}
         <div className="pt-2 border-t border-slate-100/70 flex flex-wrap items-center justify-between gap-3">
           <button
             onClick={() => setSelectedSuratModal(surat)}
@@ -294,7 +313,7 @@ export default function DashboardWarga() {
   return (
     <div className="min-h-screen bg-[#F6F9FC] font-sans antialiased flex overflow-hidden text-slate-900">
       
-      {/* ── SIDEBAR ── */}
+      {/* ΓöÇΓöÇ SIDEBAR (UTUH) ΓöÇΓöÇ */}
       <aside className="hidden lg:flex w-72 bg-white/95 backdrop-blur-xl border-r border-slate-100 flex-col sticky top-0 h-screen z-50">
         <button type="button" className="p-8 flex items-center gap-3 text-left border-b border-slate-50" onClick={() => navigate('/')}>
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-700 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
@@ -339,7 +358,7 @@ export default function DashboardWarga() {
         </div>
       </aside>
 
-      {/* ── MAIN CONTENT ── */}
+      {/* ΓöÇΓöÇ MAIN CONTENT (UTUH) ΓöÇΓöÇ */}
       <main className="flex-1 overflow-y-auto relative h-screen bg-[#F6F9FC]">
         
         {/* HEADER */}
@@ -396,7 +415,7 @@ export default function DashboardWarga() {
                 </p>
               </div>
               <div className="flex gap-4">
-                  <motion.button 
+                 <motion.button 
                   onClick={() => navigate('/layanan')}
                   whileHover={{ y: -5 }}
                   className="px-8 py-4 bg-blue-600 text-white font-black rounded-2xl text-sm shadow-xl shadow-blue-500/25 hover:bg-blue-500 transition-all flex items-center gap-3"
@@ -407,50 +426,118 @@ export default function DashboardWarga() {
             </div>
           </motion.section>
 
-          {/* QUICK STATS */}
+          {/* QUICK STATS (DIUBAH MENJADI DINAMIS DENGAN DATA ASLI BACKEND) */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {QUICK_STATS.map((s, i) => (
-              <motion.div 
-                key={s.label} initial="hidden" animate="visible" variants={FADE_UP} custom={i + 1}
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                onClick={() => { if(s.path !== "#") navigate(s.path) }}
-                className="bg-white p-7 rounded-[2rem] border border-slate-100 shadow-[0_15px_40px_-15px_rgba(0,0,0,0.03)] flex items-center gap-6 group cursor-pointer"
-              >
-                <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-50 transition-colors">
-                  <s.icon className="text-slate-400 group-hover:text-blue-600 transition-colors" size={26} strokeWidth={2.5} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{s.label}</p>
-                  <h3 className="text-2xl font-black text-slate-900 mt-0.5 tracking-tight">{s.value}</h3>
-                </div>
-                <ArrowUpRight size={20} className="text-slate-200 group-hover:text-blue-500" />
-              </motion.div>
-            ))}
+            <div onClick={() => setShowPengaduanSection(false)} className={`bg-white p-7 rounded-[2rem] border transition-all flex items-center gap-6 group cursor-pointer ${!showPengaduanSection ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-100'}`}>
+              <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-50 transition-colors">
+                <FileText className="text-blue-600" size={26} strokeWidth={2.5} />
+              </div>
+              <div className="flex-1">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Surat Aktif</p>
+                <h3 className="text-2xl font-black text-slate-900 mt-0.5 tracking-tight">{suratList.length}</h3>
+              </div>
+              <ArrowUpRight size={20} className="text-slate-200 group-hover:text-blue-500" />
+            </div>
+
+            <div onClick={() => setShowPengaduanSection(true)} className={`bg-white p-7 rounded-[2rem] border transition-all flex items-center gap-6 group cursor-pointer ${showPengaduanSection ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-slate-100'}`}>
+              <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-50 transition-colors">
+                <MessageSquare className="text-indigo-600" size={26} strokeWidth={2.5} />
+              </div>
+              <div className="flex-1">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Laporan Saya</p>
+                <h3 className="text-2xl font-black text-slate-900 mt-0.5 tracking-tight">{pengaduanList.length}</h3>
+              </div>
+              <ArrowUpRight size={20} className="text-slate-200 group-hover:text-indigo-500" />
+            </div>
+
+            <div className="bg-white p-7 rounded-[2rem] border border-slate-100 flex items-center gap-6 group">
+              <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="text-slate-400 group-hover:text-blue-600 transition-colors" size={26} strokeWidth={2.5} />
+              </div>
+              <div className="flex-1">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Poin Warga</p>
+                <h3 className="text-2xl font-black text-slate-900 mt-0.5 tracking-tight">1.250</h3>
+              </div>
+              <ArrowUpRight size={20} className="text-slate-200" />
+            </div>
           </div>
 
           {/* MAIN BENTO LAYOUT */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             
-            {/* LEFT: PROGRESS SURAT */}
+            {/* LEFT: MAIN LIST AREA */}
             <motion.div 
               initial="hidden" animate="visible" variants={FADE_UP} custom={4}
               className="lg:col-span-2 space-y-6"
             >
               <div className="flex items-center justify-between px-2">
-                <h3 className="text-xl font-black text-slate-900 tracking-tight">Status Dokumen</h3>
-                <button 
-                  onClick={() => navigate('/layanan')}
-                  className="text-[13px] font-black text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1"
-                >
-                  Semua Berkas <ChevronRight size={16} strokeWidth={3}/>
-                </button>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                  {showPengaduanSection ? "Riwayat Laporan Kendala Warga" : "Status Dokumen Surat"}
+                </h3>
+                {showPengaduanSection && (
+                  <button onClick={() => setShowPengaduanSection(false)} className="text-xs font-bold text-blue-600">
+                    Lihat Dokumen Surat
+                  </button>
+                )}
               </div>
 
               <div className="grid gap-5">
-                {suratListContent}
+                {!showPengaduanSection ? (
+                  // KONTEN SURAT ASLI KAMU (TIDAK SENTUH SAMA SEKALI)
+                  suratListContent
+                ) : (
+                  // KONTEN PENGADUAN YANG BARU KITA DAFTARKAN (NYELIP AMAN)
+                  isLoadingPengaduan ? (
+                    <div className="p-7 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm text-slate-400 text-sm font-medium">
+                      Memuat riwayat aduan...
+                    </div>
+                  ) : pengaduanList.length === 0 ? (
+                    <div className="p-7 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm text-slate-400 text-sm font-medium">
+                      Belum ada laporan yang diajukan. Klik menu "Laporan Saya" di sidebar untuk buat aduan baru.
+                    </div>
+                  ) : (
+                    pengaduanList.map((laporan) => (
+                      <div key={laporan.id} className="p-7 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col gap-5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                          <div className="flex items-center gap-5">
+                            <div className="w-14 h-14 rounded-3xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                              <MessageSquare size={24} />
+                            </div>
+                            <div>
+                              <h4 className="font-black text-slate-800 text-base tracking-tight">{laporan.judul}</h4>
+                              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">KODE: {laporan.kodePengaduan} ΓÇó {formatTanggal(laporan.createdAt)}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="px-3 py-1 bg-slate-100 text-slate-600 font-bold text-[10px] uppercase rounded-lg tracking-wider">
+                              {laporan.kategori}
+                            </span>
+                            <span className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest ${getStatusBadgeClass(laporan.status)}`}>
+                              {getStatusLabel(laporan.status)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="bg-slate-50 p-5 rounded-2xl text-sm font-medium text-slate-700 leading-relaxed">
+                          <p>{laporan.deskripsi}</p>
+                          {laporan.lokasi && (
+                            <p className="text-xs text-slate-400 font-bold mt-2 flex items-center gap-1">
+                              <MapPin size={12} /> Lokasi: {laporan.lokasi}
+                            </p>
+                          )}
+                        </div>
+                        {normalizeStatus(laporan.status) === "DITOLAK" && laporan.alasanDitolak && (
+                          <div className="p-4 bg-red-50 border border-red-100 text-red-700 text-xs rounded-xl">
+                            <span className="font-black block mb-1">ALASAN PENOLAKAN:</span>
+                            "{laporan.alasanDitolak}"
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )
+                )}
               </div>
 
-              {/* SIMPLIFIED SERVICE TIMELINE */}
+              {/* SIMPLIFIED SERVICE TIMELINE (UTUH KAMU PUNYA) */}
               <div className="p-10 bg-white rounded-[2.5rem] border border-slate-100 relative overflow-hidden shadow-sm">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl opacity-50" />
                 <div className="flex items-center gap-3 mb-8">
@@ -484,7 +571,7 @@ export default function DashboardWarga() {
               </div>
             </motion.div>
 
-            {/* RIGHT: WIDGETS */}
+            {/* RIGHT: WIDGETS (UTUH 100%) */}
             <motion.div 
               initial="hidden" animate="visible" variants={FADE_UP} custom={5}
               className="space-y-10"
@@ -533,13 +620,12 @@ export default function DashboardWarga() {
                   </div>
                 </div>
               </div>
-
             </motion.div>
           </div>
         </div>
       </main>
 
-      {/* ─── NEW MODAL: PENINJAUAN FORMAL DETAIL DI SISI WARGA ─── */}
+      {/* ΓöÇΓöÇΓöÇ MODAL PRATINJAU SURAT (UTUH 100%) ΓöÇΓöÇΓöÇ */}
       <AnimatePresence>
         {selectedSuratModal && (
           <div className="fixed inset-0 z-[100] bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
@@ -561,7 +647,6 @@ export default function DashboardWarga() {
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50/50 flex flex-col md:grid md:grid-cols-[1fr_320px] gap-6">
-                {/* TEMPLATE SURAT FORMAL */}
                 <div className="bg-white p-6 sm:p-8 border border-slate-200/60 shadow-sm rounded-2xl" ref={modalPrintRef}>
                   <div className="border-b-2 border-slate-800 pb-4 text-center">
                     <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Pemerintah Kelurahan DigiDesa</h4>
@@ -601,7 +686,6 @@ export default function DashboardWarga() {
                   </div>
                 </div>
 
-                {/* SIDEBAR AKSI MODAL */}
                 <div className="space-y-4 flex flex-col justify-between h-full">
                   <div className="bg-white p-5 border border-slate-100 rounded-2xl shadow-sm space-y-4">
                     <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">Status Berkas</h4>

@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../services/api";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -18,7 +18,6 @@ import {
   TrendingDown,
   TrendingUp,
   User,
-  Users,
   Wallet,
   X,
 } from "lucide-react";
@@ -55,7 +54,28 @@ type MenuItem = {
   active?: boolean;
 };
 
-const BASE_URL = "http://localhost:5000/api/v1/admin/finance";
+const toNumber = (val: unknown) => {
+  const num = typeof val === "number" ? val : Number(val);
+  return Number.isFinite(num) ? num : 0;
+};
+
+const normalizeToYyyyMmDd = (raw?: string) => {
+  if (!raw) return "";
+  const trimmed = String(raw).trim();
+
+  // ISO datetime or yyyy-MM-dd
+  if (trimmed.includes("T")) return trimmed.split("T")[0] || "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+
+  // dd/MM/yyyy (backend)
+  const match = /^([0-3]\d)\/([01]\d)\/(\d{4})$/.exec(trimmed);
+  if (match) {
+    const [, dd, mm, yyyy] = match;
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  return trimmed;
+};
 
 const formatIDR = (val: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -319,19 +339,38 @@ export default function Finansial() {
   useEffect(() => {
     const loadFinance = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get(BASE_URL, { headers: { Authorization: `Bearer ${token}` } });
-        const raw = res.data?.data || res.data || {};
+        // Warga view should NOT hit /api/v1/admin/** (forbidden unless ADMIN).
+        // Use /api/v1/finances and compute summary client-side.
+        const res = await api.get("/finances");
+        const list = Array.isArray(res.data?.data) ? (res.data.data as Transaction[]) : [];
+
+        const sorted = [...list].sort((a, b) => toNumber(b.id) - toNumber(a.id));
+        const totalIncome = sorted.reduce((acc, item) => {
+          const type = String(item.type || "").toUpperCase();
+          const isIncome = type === "INCOME" || type === "PEMASUKAN";
+          return acc + (isIncome ? toNumber(item.amount) : 0);
+        }, 0);
+        const totalExpense = sorted.reduce((acc, item) => {
+          const type = String(item.type || "").toUpperCase();
+          const isExpense = type === "EXPENSE" || type === "PENGELUARAN";
+          return acc + (isExpense ? toNumber(item.amount) : 0);
+        }, 0);
+
+        // Keep summary consistent with the visible totals.
+        // `current_balance` from backend may be missing or inconsistent, so we compute it here.
+        const computedBalance = totalIncome - totalExpense;
+
         setFinanceData({
-          summary: raw.summary || {
-            balance: raw.balance || 0,
-            total_income: raw.total_income || raw.income || 0,
-            total_expense: raw.total_expense || raw.expense || 0,
+          summary: {
+            balance: computedBalance,
+            total_income: totalIncome,
+            total_expense: totalExpense,
           },
-          transactions: Array.isArray(raw.transactions) ? raw.transactions : [],
+          transactions: sorted,
         });
       } catch (error) {
         console.error("Gagal ambil data keuangan warga:", error);
+        setFinanceData({ summary: { balance: 0, total_income: 0, total_expense: 0 }, transactions: [] });
       } finally {
         setIsLoading(false);
       }
@@ -349,7 +388,7 @@ export default function Finansial() {
       (typeFilter === "INCOME" && (type === "PEMASUKAN" || type === "INCOME")) ||
       (typeFilter === "EXPENSE" && (type === "PENGELUARAN" || type === "EXPENSE"));
     const rawDate = t.transaction_date || t.transactionDate || t.created_at || t.createdAt || "";
-    const itemDate = rawDate ? String(rawDate).split("T")[0] : "";
+    const itemDate = normalizeToYyyyMmDd(String(rawDate));
     const matchDate = !dateFilter || itemDate === dateFilter;
     return matchType && matchDate;
   });

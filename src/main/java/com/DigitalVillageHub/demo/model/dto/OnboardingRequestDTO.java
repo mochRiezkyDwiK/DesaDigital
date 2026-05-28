@@ -15,6 +15,13 @@ public class OnboardingRequestDTO {
 
     private String status_tinggal;
 
+    // ─── DATA SPASIAL WILAYAH (dari branch pembaruan) ───
+    private String alamat;
+
+    private String rt;
+
+    private String rw;
+
     /**
      * Sesuai spesifikasi: field evidence.
      */

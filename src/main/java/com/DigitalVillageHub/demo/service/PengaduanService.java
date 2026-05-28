@@ -14,9 +14,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Locale;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -52,7 +55,7 @@ public class PengaduanService {
             Pengaduan.PrioritasPengaduan prioritas = resolvePrioritas(dto.getPrioritas());
 
             Pengaduan pengaduan = Pengaduan.builder()
-                    .kodePengaduan(null)
+                    .kodePengaduan(generateKodePengaduan())
                     .judul(dto.getJudul().trim())
                     .kategori(dto.getKategori().trim())
                     .deskripsi(dto.getDeskripsi().trim())
@@ -196,6 +199,22 @@ public class PengaduanService {
 
     private PengaduanResponseDTO toResponseDTO(Pengaduan pengaduan) {
         User warga = pengaduan.getWarga();
+
+        // Ambil data petugas aktif (penugasan terbaru) untuk ditampilkan di response
+        List<PengaduanPetugas> penugasan = pengaduanPetugasRepository
+                .findByPengaduan_IdOrderByAssignedAtDesc(pengaduan.getId());
+        Long petugasId = null;
+        String petugasNama = null;
+        String catatanPetugas = null;
+        if (penugasan != null && !penugasan.isEmpty()) {
+            PengaduanPetugas active = penugasan.get(0);
+            if (active.getPetugas() != null) {
+                petugasId = active.getPetugas().getId();
+                petugasNama = active.getPetugas().getNamaLengkap();
+            }
+            catatanPetugas = active.getCatatan();
+        }
+
         return PengaduanResponseDTO.builder()
                 .id(pengaduan.getId())
                 .kodePengaduan(pengaduan.getKodePengaduan())
@@ -215,6 +234,9 @@ public class PengaduanService {
                 .wargaId(warga != null ? warga.getId() : null)
                 .pelaporNik(warga != null ? warga.getNik() : null)
                 .pelaporNama(warga != null ? warga.getNamaLengkap() : null)
+                .petugasId(petugasId)
+                .petugasNama(petugasNama)
+                .catatanPetugas(catatanPetugas)
                 .build();
     }
 
@@ -230,5 +252,15 @@ public class PengaduanService {
                 .createdAt(assignment.getCreatedAt())
                 .updatedAt(assignment.getUpdatedAt())
                 .build();
+    }
+
+    private String generateKodePengaduan() {
+        String tanggal = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String uuid8 = UUID.randomUUID()
+                .toString()
+                .replace("-", "")
+                .substring(0, 8)
+                .toUpperCase(Locale.ROOT);
+        return "PGD-" + tanggal + "-" + uuid8;
     }
 }

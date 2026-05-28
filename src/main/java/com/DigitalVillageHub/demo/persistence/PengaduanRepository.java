@@ -9,9 +9,9 @@ import java.util.List;
 
 public interface PengaduanRepository extends JpaRepository<Pengaduan, Long> {
 
-    @EntityGraph(attributePaths = {"user"})
+    @EntityGraph(attributePaths = {"warga"})
     List<Pengaduan> findAllByOrderByCreatedAtDesc();
 
-    @EntityGraph(attributePaths = {"user"})
+    @EntityGraph(attributePaths = {"warga"})
     List<Pengaduan> findByWargaOrderByCreatedAtDesc(User warga);
 }

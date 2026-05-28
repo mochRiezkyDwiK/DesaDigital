@@ -83,6 +83,11 @@ function App() {
             path="/lengkapi-data" 
             element={<OnboardingRoute currentStatus={currentStatus} setCurrentStatus={setCurrentStatus} />} 
           />
+          {/* Alias route lama agar tidak putus jika ada bookmark /onboarding */}
+          <Route 
+            path="/onboarding" 
+            element={<OnboardingRoute currentStatus={currentStatus} setCurrentStatus={setCurrentStatus} />} 
+          />
           
           {/* Rute Warga (Butuh Login & Wajib Lolos Verifikasi Status VERIFIED) */}
           <Route path="/dashboard-warga" element={<ProtectedRoute requiredRole="WARGA"><DashboardWarga /></ProtectedRoute>} />
@@ -93,6 +98,8 @@ function App() {
 
           {/* Rute Admin (Butuh Hak Akses ADMIN) */}
           <Route path="/admin" element={<ProtectedRoute requiredRole="ADMIN"><AdminDashboard /></ProtectedRoute>} />
+          {/* Alias route /admin/dashboard untuk kompatibilitas */}
+          <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="ADMIN"><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/validasi" element={<ProtectedRoute requiredRole="ADMIN"><AdminValidasiSurat /></ProtectedRoute>} />
           <Route path="/admin/laporan" element={<ProtectedRoute requiredRole="ADMIN"><AdminLaporan /></ProtectedRoute>} />
           <Route path="/admin/penduduk" element={<ProtectedRoute requiredRole="ADMIN"><AdminPenduduk /></ProtectedRoute>} />

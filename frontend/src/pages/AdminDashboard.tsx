@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import api from "../services/api";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +24,7 @@ import {
   Plus
 } from "lucide-react";
 
-// ─── CONFIG ──────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ CONFIG ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 const EASE_SPRING = [0.16, 1, 0.3, 1];
 
@@ -37,7 +37,7 @@ const FADE_UP = {
   })
 };
 
-// ─── COMPONENTS ───────────────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ COMPONENTS ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans antialiased flex">
       
-      {/* ── SIDEBAR ── */}
+      {/* ΓöÇΓöÇ SIDEBAR ΓöÇΓöÇ */}
       <aside className="hidden lg:flex w-72 bg-white border-r border-slate-200 flex-col sticky top-0 h-screen z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
         <div className="p-8 flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/20">
@@ -163,6 +163,8 @@ export default function AdminDashboard() {
           ))}         
         </nav>
 
+        
+
         <div className="p-8">
           <div className="p-5 bg-slate-50 rounded-[2rem] border border-slate-100 flex flex-col items-center text-center">
             <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center mb-3">
@@ -174,14 +176,14 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* ── MAIN CONTENT ── */}
+      {/* ΓöÇΓöÇ MAIN CONTENT ΓöÇΓöÇ */}
       <main className="flex-1 flex flex-col min-h-screen">
         
         {/* EXECUTIVE HEADER */}
         <header className="h-24 bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40 px-10 flex items-center justify-between">
           <div className="flex flex-col">
             <h1 className="text-lg font-black text-slate-900 tracking-tight">Panel Eksekutif Desa</h1>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Digital Hub • Real-time Monitoring</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Digital Hub ΓÇó Real-time Monitoring</p>
           </div>
           
           <div className="flex items-center gap-6">
@@ -240,7 +242,7 @@ export default function AdminDashboard() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
             
-            {/* ── CLEAN TABLE: VALIDASI SURAT ── */}
+            {/* ΓöÇΓöÇ CLEAN TABLE: VALIDASI SURAT ΓöÇΓöÇ */}
             <motion.div 
               initial="hidden" animate="visible" variants={FADE_UP} custom={4}
               className="lg:col-span-2 bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden"
@@ -279,7 +281,7 @@ export default function AdminDashboard() {
                               <div>
                                 <p className="text-sm font-black text-slate-900">{row.user?.name || row.namaWarga || 'Anonim'}</p>
                                 <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">
-                                  NIK: {row.user?.nik || row.nikWarga || '-'} • {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '-'}
+                                  NIK: {row.user?.nik || row.nikWarga || '-'} ΓÇó {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '-'}
                                 </p>
                               </div>
                             </div>
@@ -308,7 +310,7 @@ export default function AdminDashboard() {
               </div>
             </motion.div>
 
-            {/* ── RIGHT COLUMN: QUICK TOOLS ── */}
+            {/* ΓöÇΓöÇ RIGHT COLUMN: QUICK TOOLS ΓöÇΓöÇ */}
             <motion.div 
               initial="hidden" animate="visible" variants={FADE_UP} custom={5}
               className="space-y-10"

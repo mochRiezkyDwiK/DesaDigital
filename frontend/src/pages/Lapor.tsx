@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 import {
   ArrowLeft,
   Camera,
@@ -35,6 +36,7 @@ const STEP_ITEMS = [
 export default function Lapor() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     judul: "",
     kategori: "Infrastruktur",
@@ -42,9 +44,36 @@ export default function Lapor() {
     lokasi: "",
   });
 
-  const handleSubmit = (e: { preventDefault: () => void }) => {
+  const handleKirimPengaduan = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    setStep(2);
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        judul: formData.judul.trim(),
+        kategori: formData.kategori,
+        deskripsi: formData.deskripsi.trim(),
+        lokasi: formData.lokasi.trim() ? formData.lokasi.trim() : null,
+      };
+
+      const response = await api.post("/warga/pengaduan", payload);
+      if (response.data?.success === false) {
+        throw new Error(response.data?.message || "Gagal mengirim pengaduan");
+      }
+
+      setStep(2);
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message || "Gagal mengirim pengaduan";
+      globalThis.alert(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -137,7 +166,7 @@ export default function Lapor() {
             </motion.section>
 
             <motion.section initial="hidden" animate="visible" variants={FADE_UP} custom={1} className="lg:col-span-3">
-              <form onSubmit={handleSubmit} className="overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-[0_26px_80px_-36px_rgba(15,23,42,0.28)]">
+              <form onSubmit={handleKirimPengaduan} className="overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-[0_26px_80px_-36px_rgba(15,23,42,0.28)]">
                 <div className="border-b border-slate-100 bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 px-7 py-7 text-white sm:px-10">
                   <p className="text-[10px] font-black uppercase tracking-[0.28em] text-blue-200/80">Formulir Aduan</p>
                   <h3 className="mt-2 text-2xl font-black tracking-tight">Sampaikan masalah yang ingin diperbaiki</h3>
@@ -238,10 +267,11 @@ export default function Lapor() {
                     </div>
                     <button
                       type="submit"
+                      disabled={isSubmitting}
                       className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-4 text-sm font-black text-white shadow-[0_18px_40px_-20px_rgba(15,23,42,0.45)] transition-all hover:-translate-y-0.5 hover:bg-blue-600"
                     >
                       <Send size={16} />
-                      Kirim Laporan
+                      {isSubmitting ? "Mengirim..." : "Kirim Laporan"}
                     </button>
                   </div>
                 </div>
