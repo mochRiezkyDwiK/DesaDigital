@@ -512,7 +512,7 @@ export default function DashboardWarga() {
                             </div>
                             <div>
                               <h4 className="font-black text-slate-800 text-base tracking-tight">{laporan.judul}</h4>
-                              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">KODE: {laporan.kodePengaduan} ΓÇó {formatTanggal(laporan.createdAt)}</p>
+                              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">KODE: {laporan.kodePengaduan} • {formatTanggal(laporan.createdAt)}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
