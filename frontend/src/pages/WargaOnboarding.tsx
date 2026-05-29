@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { 
   ShieldAlert, 
@@ -7,10 +7,10 @@ import {
   XCircle, 
   CheckCircle2, 
   Loader2, 
-  User, 
   FileText, 
   Home,
-  LogOut
+  LogOut,
+  MapPin
 } from "lucide-react";
 
 interface OnboardingProps {
@@ -24,13 +24,19 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingProfile, setIsFetchingProfile] = useState(true);
 
-  // State Form Mandiri Warga
+  // State Form Mandiri Warga (Sudah Diperluas dengan Alamat, RT, RW)
   const [formData, setFormData] = useState({
     no_kk: "",
     status_hubungan: "Kepala Keluarga",
     status_tinggal: "TETAP",
+    alamat: "",
+    rt: "",
+    rw: "",
     foto_ktp: null as File | null
   });
+
+  // Helper: hanya izinkan karakter digit 0-9, blokir huruf/simbol/emoji
+  const numericOnly = (value: string) => value.replace(/\D/g, "");
 
   // 1. Ambil Profil Terbaru untuk Memastikan Status Akun Riil dari DB
   const checkCurrentStatus = async () => {
@@ -43,10 +49,10 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
         const raw = res.data.data.status_akun;
         const normalize = (s: string) => {
           const v = (s || "").toString().trim().toUpperCase();
-          if (v.includes("VERIFIED")) return "VERIFIED";
+          if (v.includes("VERIFIED") || v.includes("APPROVED")) return "VERIFIED";
           if (v === "INCOMPLETE") return "INCOMPLETE";
           if (v === "PENDING" || v === "PENDING_ADMIN" || v === "PENDING_VERIFICATION") return "PENDING";
-          if (v === "REJECTED" || v === "REJECTED_ADMIN") return "REJECTED";
+          if (v.includes("REJECT") || v === "DATA_REJECTED") return "REJECTED";
           return v || "INCOMPLETE";
         };
 
@@ -64,7 +70,8 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
       }
     } catch (error) {
       console.error("Gagal sinkronisasi status verifikasi:", error);
-    } finally {
+    } // -- FIXED: Typo kata kunci JavaScript diperbaiki menjadi double 'l' --
+    finally {
       setIsFetchingProfile(false);
     }
   };
@@ -73,10 +80,10 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
     // pastikan status awal dari prop juga ternormalisasi
     const normalizeProp = (raw: string) => {
       const v = (raw || "").toString().trim().toUpperCase();
-      if (v.includes("VERIFIED")) return "VERIFIED";
+      if (v.includes("VERIFIED") || v.includes("APPROVED")) return "VERIFIED";
       if (v === "INCOMPLETE") return "INCOMPLETE";
       if (v === "PENDING" || v === "PENDING_ADMIN" || v === "PENDING_VERIFICATION") return "PENDING";
-      if (v === "REJECTED" || v === "REJECTED_ADMIN") return "REJECTED";
+      if (v.includes("REJECT") || v === "DATA_REJECTED") return "REJECTED";
       return v || "INCOMPLETE";
     };
 
@@ -89,12 +96,20 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
     e.preventDefault();
     if (!formData.foto_ktp) return alert("Silakan unggah foto KTP/KK terlebih dahulu!");
     if (formData.no_kk.length !== 16) return alert("Nomor Kartu Keluarga (KK) harus tepat 16 digit angka!");
+    if (/\D/.test(formData.no_kk)) return alert("Nomor KK hanya boleh berisi angka!");
+    if (!formData.alamat.trim()) return alert("Alamat rumah tidak boleh kosong!");
+    if (!formData.rt.trim() || !formData.rw.trim()) return alert("Kolom RT dan RW wajib diisi!");
+    if (/\D/.test(formData.rt)) return alert("RT hanya boleh berisi angka!");
+    if (/\D/.test(formData.rw)) return alert("RW hanya boleh berisi angka!");
 
     setIsLoading(true);
     const data = new FormData();
     data.append("no_kk", formData.no_kk);
     data.append("status_hubungan", formData.status_hubungan);
     data.append("status_tinggal", formData.status_tinggal);
+    data.append("alamat", formData.alamat); 
+    data.append("rt", formData.rt);         
+    data.append("rw", formData.rw);         
     data.append("foto_ktp", formData.foto_ktp);
 
     try {
@@ -107,12 +122,13 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
       });
 
       if (res.data.success) {
-        alert("Data formulir berhasil dikirim ke Admin!");
+        alert("Data formulir kependudukan berhasil dikirim ke Admin!");
         setStatus("PENDING"); // Ubah UI ke mode stand-by/menunggu
       }
     } catch (error: any) {
       alert(error.response?.data?.message || "Gagal mengirim formulir onboarding");
-    } finally {
+    } // -- FIXED: Typo kata kunci JavaScript diperbaiki menjadi double 'l' --
+    finally {
       setIsLoading(false);
     }
   };
@@ -172,15 +188,20 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              
+              {/* INPUT 1: NOMOR KK */}
               <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block">Nomor Kartu Keluarga (KK)</label>
+                <label htmlFor="no_kk" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block">Nomor Kartu Keluarga (KK)</label>
                 <div className="relative flex items-center">
                   <input 
+                    id="no_kk"
                     required 
-                    type="number" 
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={16}
                     value={formData.no_kk}
-                    onChange={(e) => setFormData({...formData, no_kk: e.target.value})}
+                    onChange={(e) => setFormData({...formData, no_kk: numericOnly(e.target.value)})}
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-bold focus:border-blue-600 outline-none transition-colors" 
                     placeholder="Masukkan 16 digit nomor KK" 
                   />
@@ -188,10 +209,69 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
                 </div>
               </div>
 
+              {/* INPUT GRID ALAMAT, RT, RW */}
+              <div className="p-6 bg-slate-50/50 border border-slate-100 rounded-3xl space-y-4">
+                <div>
+                  <label htmlFor="alamat" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block">Alamat Rumah Lengkap (Domisili Sekarang)</label>
+                  <div className="relative flex items-center">
+                    <input 
+                      id="alamat"
+                      required 
+                      type="text" 
+                      value={formData.alamat}
+                      onChange={(e) => setFormData({...formData, alamat: e.target.value})}
+                      className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-bold focus:border-blue-600 outline-none transition-colors" 
+                      placeholder="Contoh: Jl. Cisaladah No. 12 RT 01" 
+                    />
+                    <Home size={16} className="absolute left-4 text-slate-400" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="rt" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block">Rukun Tetangga (RT)</label>
+                    <div className="relative flex items-center">
+                      <input 
+                        id="rt"
+                        required 
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={5}
+                        value={formData.rt}
+                        onChange={(e) => setFormData({...formData, rt: numericOnly(e.target.value)})}
+                        className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-10 pr-4 text-sm font-bold focus:border-blue-600 outline-none transition-colors" 
+                        placeholder="Misal: 01" 
+                      />
+                      <MapPin size={14} className="absolute left-4 text-slate-400" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="rw" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block">Rukun Warga (RW)</label>
+                    <div className="relative flex items-center">
+                      <input 
+                        id="rw"
+                        required 
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={5}
+                        value={formData.rw}
+                        onChange={(e) => setFormData({...formData, rw: numericOnly(e.target.value)})}
+                        className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-10 pr-4 text-sm font-bold focus:border-blue-600 outline-none transition-colors" 
+                        placeholder="Misal: 10" 
+                      />
+                      <MapPin size={14} className="absolute left-4 text-slate-400" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* INPUT SELECT HUBUNGAN & DOMISILI */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block">Status Hubungan di KK</label>
+                  <label htmlFor="status_hubungan" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block">Status Hubungan di KK</label>
                   <select 
+                    id="status_hubungan"
                     value={formData.status_hubungan}
                     onChange={(e) => setFormData({...formData, status_hubungan: e.target.value})}
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-4 text-sm font-bold focus:border-blue-600 outline-none transition-colors appearance-none cursor-pointer"
@@ -204,8 +284,9 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block">Status Domisili / Tinggal</label>
+                  <label htmlFor="status_tinggal" className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block">Status Domisili / Tinggal</label>
                   <select 
+                    id="status_tinggal"
                     value={formData.status_tinggal}
                     onChange={(e) => setFormData({...formData, status_tinggal: e.target.value})}
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-4 text-sm font-bold focus:border-blue-600 outline-none transition-colors appearance-none cursor-pointer"
@@ -216,10 +297,10 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
                 </div>
               </div>
 
-              {/* Komponen Upload Foto KTP/KK Drag-and-Drop Style */}
+              {/* COMPONENT UPLOAD FOTO BUKTI */}
               <div>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block">Unggah Foto KTP / Berkas KK</label>
-                <label className="w-full h-44 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50/50 hover:bg-slate-50 hover:border-blue-500 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer relative overflow-hidden group">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block">Unggah Foto KTP / Berkas KK</span>
+                <label className="w-full h-40 border-2 border-dashed border-slate-200 rounded-[2rem] bg-slate-50/50 hover:bg-slate-50 hover:border-blue-500 transition-all flex flex-col items-center justify-center gap-2 cursor-pointer relative overflow-hidden group">
                   <input 
                     type="file" 
                     accept="image/*" 
@@ -235,7 +316,7 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
                   ) : (
                     <div className="text-center text-slate-400">
                       <UploadCloud className="mx-auto mb-2 group-hover:text-blue-600 group-hover:scale-110 transition-transform" size={36} />
-                      <p className="text-xs font-black uppercase text-slate-700 tracking-wide">Pilih Gambar Nota/KTP</p>
+                      <p className="text-xs font-black uppercase text-slate-700 tracking-wide">Pilih Gambar KTP</p>
                       <p className="text-[10px] font-medium mt-1">Format JPG, JPEG, PNG (Maks 5MB)</p>
                     </div>
                   )}

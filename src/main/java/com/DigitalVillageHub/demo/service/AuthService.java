@@ -136,6 +136,9 @@ public class AuthService {
         data.put("no_kk", user.getNoKk());
         data.put("status_hubungan", user.getStatusHubungan());
         data.put("status_tinggal", user.getStatusTinggal());
+        data.put("alamat", user.getAlamat());
+        data.put("rt", user.getRt());
+        data.put("rw", user.getRw());
         data.put("foto_ktp", user.getFotoKtp());
 
         return AuthResponse.builder()
@@ -174,6 +177,16 @@ public class AuthService {
             throw new RuntimeException("Status tinggal wajib diisi");
         }
 
+        if (request.getAlamat() == null || request.getAlamat().isBlank()) {
+            throw new RuntimeException("Alamat rumah wajib diisi");
+        }
+        if (request.getRt() == null || request.getRt().isBlank()) {
+            throw new RuntimeException("Kolom RT wajib diisi");
+        }
+        if (request.getRw() == null || request.getRw().isBlank()) {
+            throw new RuntimeException("Kolom RW wajib diisi");
+        }
+
         MultipartFile evidence = request.resolveEvidence();
         if (evidence == null || evidence.isEmpty()) {
             throw new RuntimeException("Silakan unggah berkas KTP/KK terlebih dahulu");
@@ -190,6 +203,9 @@ public class AuthService {
         user.setNoKk(noKk);
         user.setStatusHubungan(statusHubungan);
         user.setStatusTinggal(statusTinggal);
+        user.setAlamat(request.getAlamat().trim());
+        user.setRt(request.getRt().trim());
+        user.setRw(request.getRw().trim());
         user.setFotoKtp(storedPath);
         user.setStatusAkun("PENDING_VERIFICATION");
 
@@ -203,6 +219,9 @@ public class AuthService {
                         "username", user.getUsername(),
                         "status_akun", user.getStatusAkun(),
                         "no_kk", user.getNoKk(),
+                        "alamat", user.getAlamat(),
+                        "rt", user.getRt(),
+                        "rw", user.getRw(),
                         "foto_ktp", user.getFotoKtp()
                 ))
                 .build();

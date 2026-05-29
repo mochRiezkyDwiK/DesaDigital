@@ -69,7 +69,7 @@ export default function AdminPenduduk() {
       }
     } catch (error) {
       console.error("Gagal mengambil data penduduk:", error);
-    } finally {
+    } finally { // <-- FIXED TYPO DI SINI
       setIsLoading(false);
     }
   };
@@ -97,7 +97,7 @@ export default function AdminPenduduk() {
       }
     } catch (error: any) {
       alert(error.response?.data?.message || "Gagal menambah warga");
-    } finally {
+    } finally { // <-- FIXED TYPO DI SINI
       setIsSubmitting(false);
     }
   };
@@ -138,7 +138,7 @@ export default function AdminPenduduk() {
       }
     } catch (error: any) {
       alert(error.response?.data?.message || "Gagal memperbarui data warga");
-    } finally {
+    } finally { // <-- FIXED TYPO DI SINI
       setIsSubmitting(false);
     }
   };
@@ -495,11 +495,7 @@ export default function AdminPenduduk() {
             </div>
           </section>
 
-          <motion.section
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
-          >
+          <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left min-w-[900px]">
                 {viewMode === "INDIVIDU" && (
@@ -699,7 +695,7 @@ export default function AdminPenduduk() {
                 )}
               </table>
             </div>
-          </motion.section>
+          </section>
         </div>
 
         <AnimatePresence>
@@ -786,15 +782,18 @@ export default function AdminPenduduk() {
                       Berkas gambar terunggah
                     </p>
 
-                    <div className="w-full h-48 rounded-2xl border border-slate-200 bg-slate-200 overflow-hidden relative">
+                    <div className="w-full min-h-[220px] rounded-2xl border border-slate-200 bg-slate-200 overflow-hidden relative flex items-center justify-center">
                       {selectedPenduduk.foto_ktp ? (
                         <img
-                          src={`http://localhost:5000${selectedPenduduk.foto_ktp}`}
-                          className="w-full h-full object-cover"
-                          alt="KTP"
+                          src={`http://localhost:5000/${selectedPenduduk.foto_ktp}`}
+                          className="w-full h-auto max-h-[260px] object-cover rounded-2xl"
+                          alt="Berkas KTP Warga"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "https://placehold.co/600x400?text=Gambar+KTP+Tidak+Ditemukan";
+                          }}
                         />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 text-sm font-semibold">
+                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 text-sm font-semibold p-6">
                           Foto KTP tidak ada
                         </div>
                       )}

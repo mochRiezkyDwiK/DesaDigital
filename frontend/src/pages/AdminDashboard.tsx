@@ -26,7 +26,7 @@ import {
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 
-const EASE_SPRING = [0.16, 1, 0.3, 1];
+const EASE_SPRING = [0.16, 1, 0.3, 1] as const;
 
 const FADE_UP = {
   hidden: { opacity: 0, y: 20 },
@@ -162,6 +162,8 @@ export default function AdminDashboard() {
             </button>
           ))}         
         </nav>
+
+        
 
         <div className="p-8">
           <div className="p-5 bg-slate-50 rounded-[2rem] border border-slate-100 flex flex-col items-center text-center">
