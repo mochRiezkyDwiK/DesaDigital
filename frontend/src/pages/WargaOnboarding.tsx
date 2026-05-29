@@ -161,7 +161,7 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
 
       <div className="w-full max-w-2xl bg-white rounded-[3rem] border border-slate-100 shadow-xl p-12 relative overflow-hidden">
         
-        {/* ΓöÇΓöÇΓöÇ KONDISI 1: INCOMPLETE & REJECTED (FORMULIR ISI DATA) ΓöÇΓöÇΓöÇ */}
+        {/* ─── KONDISI 1: INCOMPLETE & REJECTED (FORMULIR ISI DATA) ─── */}
         {(status === "INCOMPLETE" || status === "REJECTED") && (
           <div>
             <div className="flex items-center gap-4 mb-8">
@@ -334,7 +334,7 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
           </div>
         )}
 
-        {/* ΓöÇΓöÇΓöÇ KONDISI 2: PENDING (MENUNGGU ACC ADMIN) ΓöÇΓöÇΓöÇ */}
+        {/* ─── KONDISI 2: PENDING (MENUNGGU ACC ADMIN) ─── */}
         {status === "PENDING" && (
           <div className="py-8 flex flex-col items-center text-center">
             <div className="w-20 h-20 bg-amber-50 text-amber-500 rounded-[2rem] flex items-center justify-center shadow-xl shadow-amber-500/10 mb-8 border border-amber-100 animate-pulse">

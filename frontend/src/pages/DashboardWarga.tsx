@@ -30,7 +30,7 @@ import {
   MapPin
 } from "lucide-react";
 
-// ΓöÇΓöÇΓöÇ CONFIGURATION ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── CONFIGURATION ────────────────────────────────────────────────────────
 
 const EASE_SPRING = [0.16, 1, 0.3, 1] as const;
 
@@ -250,7 +250,7 @@ export default function DashboardWarga() {
             </div>
             <div>
               <h4 className="font-black text-slate-800 text-base tracking-tight">{surat.tipe}</h4>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Ref: {surat.noSurat || surat.id} ΓÇó {surat.tgl}</p>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Ref: {surat.noSurat || surat.id} • {surat.tgl}</p>
             </div>
           </div>
           <div className="flex items-center gap-8">
@@ -320,7 +320,7 @@ export default function DashboardWarga() {
   return (
     <div className="min-h-screen bg-[#F6F9FC] font-sans antialiased flex overflow-hidden text-slate-900">
       
-      {/* ΓöÇΓöÇ SIDEBAR (UTUH) ΓöÇΓöÇ */}
+      {/* ── SIDEBAR (UTUH) ── */}
       <aside className="hidden lg:flex w-72 bg-white/95 backdrop-blur-xl border-r border-slate-100 flex-col sticky top-0 h-screen z-50">
         <button type="button" className="p-8 flex items-center gap-3 text-left border-b border-slate-50" onClick={() => navigate('/')}>
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-700 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
@@ -365,7 +365,7 @@ export default function DashboardWarga() {
         </div>
       </aside>
 
-      {/* ΓöÇΓöÇ MAIN CONTENT (UTUH) ΓöÇΓöÇ */}
+      {/* ── MAIN CONTENT (UTUH) ── */}
       <main className="flex-1 overflow-y-auto relative h-screen bg-[#F6F9FC]">
         
         {/* HEADER */}
@@ -632,7 +632,7 @@ export default function DashboardWarga() {
         </div>
       </main>
 
-      {/* ΓöÇΓöÇΓöÇ MODAL PRATINJAU SURAT (UTUH 100%) ΓöÇΓöÇΓöÇ */}
+      {/* ─── MODAL PRATINJAU SURAT (UTUH 100%) ─── */}
       <AnimatePresence>
         {selectedSuratModal && (
           <div className="fixed inset-0 z-[100] bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">

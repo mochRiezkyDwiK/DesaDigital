@@ -758,7 +758,7 @@ export default function AdminPenduduk() {
                     <div className="flex justify-between gap-5 py-3 border-b border-slate-100">
                       <span className="font-medium text-slate-500">Hubungan / domisili</span>
                       <span className="font-semibold text-slate-800 text-right">
-                        {selectedPenduduk.status_hubungan} ΓÇó {selectedPenduduk.status_tinggal}
+                        {selectedPenduduk.status_hubungan} • {selectedPenduduk.status_tinggal}
                       </span>
                     </div>
 
