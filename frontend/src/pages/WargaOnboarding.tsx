@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { 
   ShieldAlert, 
@@ -35,6 +35,9 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
     foto_ktp: null as File | null
   });
 
+  // Helper: hanya izinkan karakter digit 0-9, blokir huruf/simbol/emoji
+  const numericOnly = (value: string) => value.replace(/\D/g, "");
+
   // 1. Ambil Profil Terbaru untuk Memastikan Status Akun Riil dari DB
   const checkCurrentStatus = async () => {
     try {
@@ -46,10 +49,10 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
         const raw = res.data.data.status_akun;
         const normalize = (s: string) => {
           const v = (s || "").toString().trim().toUpperCase();
-          if (v.includes("VERIFIED")) return "VERIFIED";
+          if (v.includes("VERIFIED") || v.includes("APPROVED")) return "VERIFIED";
           if (v === "INCOMPLETE") return "INCOMPLETE";
           if (v === "PENDING" || v === "PENDING_ADMIN" || v === "PENDING_VERIFICATION") return "PENDING";
-          if (v === "REJECTED" || v === "REJECTED_ADMIN") return "REJECTED";
+          if (v.includes("REJECT") || v === "DATA_REJECTED") return "REJECTED";
           return v || "INCOMPLETE";
         };
 
@@ -77,10 +80,10 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
     // pastikan status awal dari prop juga ternormalisasi
     const normalizeProp = (raw: string) => {
       const v = (raw || "").toString().trim().toUpperCase();
-      if (v.includes("VERIFIED")) return "VERIFIED";
+      if (v.includes("VERIFIED") || v.includes("APPROVED")) return "VERIFIED";
       if (v === "INCOMPLETE") return "INCOMPLETE";
       if (v === "PENDING" || v === "PENDING_ADMIN" || v === "PENDING_VERIFICATION") return "PENDING";
-      if (v === "REJECTED" || v === "REJECTED_ADMIN") return "REJECTED";
+      if (v.includes("REJECT") || v === "DATA_REJECTED") return "REJECTED";
       return v || "INCOMPLETE";
     };
 
@@ -93,8 +96,11 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
     e.preventDefault();
     if (!formData.foto_ktp) return alert("Silakan unggah foto KTP/KK terlebih dahulu!");
     if (formData.no_kk.length !== 16) return alert("Nomor Kartu Keluarga (KK) harus tepat 16 digit angka!");
+    if (/\D/.test(formData.no_kk)) return alert("Nomor KK hanya boleh berisi angka!");
     if (!formData.alamat.trim()) return alert("Alamat rumah tidak boleh kosong!");
     if (!formData.rt.trim() || !formData.rw.trim()) return alert("Kolom RT dan RW wajib diisi!");
+    if (/\D/.test(formData.rt)) return alert("RT hanya boleh berisi angka!");
+    if (/\D/.test(formData.rw)) return alert("RW hanya boleh berisi angka!");
 
     setIsLoading(true);
     const data = new FormData();
@@ -191,9 +197,11 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
                   <input 
                     id="no_kk"
                     required 
-                    type="number" 
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={16}
                     value={formData.no_kk}
-                    onChange={(e) => setFormData({...formData, no_kk: e.target.value})}
+                    onChange={(e) => setFormData({...formData, no_kk: numericOnly(e.target.value)})}
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-bold focus:border-blue-600 outline-none transition-colors" 
                     placeholder="Masukkan 16 digit nomor KK" 
                   />
@@ -226,10 +234,11 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
                       <input 
                         id="rt"
                         required 
-                        type="text" 
+                        type="text"
+                        inputMode="numeric"
                         maxLength={5}
                         value={formData.rt}
-                        onChange={(e) => setFormData({...formData, rt: e.target.value})}
+                        onChange={(e) => setFormData({...formData, rt: numericOnly(e.target.value)})}
                         className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-10 pr-4 text-sm font-bold focus:border-blue-600 outline-none transition-colors" 
                         placeholder="Misal: 01" 
                       />
@@ -243,10 +252,11 @@ export default function WargaOnboarding({ userStatus, onVerified }: OnboardingPr
                       <input 
                         id="rw"
                         required 
-                        type="text" 
+                        type="text"
+                        inputMode="numeric"
                         maxLength={5}
                         value={formData.rw}
-                        onChange={(e) => setFormData({...formData, rw: e.target.value})}
+                        onChange={(e) => setFormData({...formData, rw: numericOnly(e.target.value)})}
                         className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-10 pr-4 text-sm font-bold focus:border-blue-600 outline-none transition-colors" 
                         placeholder="Misal: 10" 
                       />

@@ -114,13 +114,12 @@ export default function Login() {
           let statusAkunActual = resData.data?.statusAkun || loggedUser?.statusAkun || loggedUser?.status_akun || "INCOMPLETE";
           const roleActual = loggedUser?.role === "ADMIN_RT" ? "ADMIN" : (loggedUser?.role || "WARGA");
 
-          // Normalisasi beberapa varian status dari backend agar routing onboarding konsisten
           const normalizeStatus = (raw: string) => {
             const s = (raw || "").toString().trim().toUpperCase();
-            if (s.includes("VERIFIED")) return "VERIFIED";
+            if (s.includes("VERIFIED") || s.includes("APPROVED")) return "VERIFIED";
             if (s === "INCOMPLETE") return "INCOMPLETE";
             if (s === "PENDING" || s === "PENDING_ADMIN" || s === "PENDING_VERIFICATION") return "PENDING";
-            if (s === "REJECTED" || s === "REJECTED_ADMIN") return "REJECTED";
+            if (s.includes("REJECT") || s === "DATA_REJECTED") return "REJECTED";
             return s || "INCOMPLETE";
           };
 
@@ -180,7 +179,7 @@ export default function Login() {
         </motion.button>
 
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{ width: "36px", height: "36px", background: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)", borderRadius: "10px", display: "flex", alignItems: "center", justifycenter: "center", boxShadow: "0 0 20px rgba(37,99,235,0.4)" }}>
+          <div style={{ width: "36px", height: "36px", background: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 20px rgba(37,99,235,0.4)" }}>
             <Building2 size={18} color="white" style={{ margin: "auto" }} />
           </div>
           <div>
@@ -216,7 +215,7 @@ export default function Login() {
           <motion.div variants={fadeUp} style={{ marginBottom: "48px" }}>
             {features.map((f, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px", fontSize: "14px", color: "#94A3B8" }}>
-                <div style={{ width: "20px", height: "20px", borderRadius: "50%", background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", display: "flex", alignItems: "center", justifycenter: "center", flexShrink: 0 }}>
+                <div style={{ width: "20px", height: "20px", borderRadius: "50%", background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <CheckCircle2 size={11} color="#818CF8" />
                 </div>
                 {f}
@@ -235,7 +234,7 @@ export default function Login() {
           </motion.div>
         </motion.section>
 
-        <section style={{ display: "flex", alignItems: "center", justifycenter: "center", padding: "40px 0", borderLeft: "1px solid rgba(255,255,255,0.05)", paddingLeft: "60px" }}>
+        <section style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 0", borderLeft: "1px solid rgba(255,255,255,0.05)", paddingLeft: "60px" }}>
           <motion.div
             initial={{ opacity: 0, x: 30, scale: 0.97 }} animate={{ opacity: 1, x: 0, scale: 1 }} transition={{ duration: 0.7, ease: EASE, delay: 0.2 }}
             style={{ width: "100%", maxWidth: "400px", background: "rgba(15,20,30,0.8)", backdropFilter: "blur(24px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "28px", padding: "36px", boxShadow: "0 40px 80px rgba(0,0,0,0.5)", position: "relative", overflow: "hidden" }}
@@ -243,7 +242,7 @@ export default function Login() {
             <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "200px", height: "1px", background: "linear-gradient(90deg, transparent, rgba(99,102,241,0.6), transparent)" }} />
             
             <div style={{ marginBottom: "28px" }}>
-              <div style={{ width: "48px", height: "48px", background: "linear-gradient(135deg, #2563EB, #4F46E5)", borderRadius: "14px", display: "flex", alignItems: "center", justifycenter: "center", marginBottom: "16px", boxShadow: "0 8px 24px rgba(79,70,229,0.35)" }}>
+              <div style={{ width: "48px", height: "48px", background: "linear-gradient(135deg, #2563EB, #4F46E5)", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "16px", boxShadow: "0 8px 24px rgba(79,70,229,0.35)" }}>
                 {isRegister ? <UserPlus size={22} color="white" /> : <Fingerprint size={24} color="white" />}
               </div>
               <h2 style={{ fontSize: "26px", fontWeight: 700, letterSpacing: "-0.02em", margin: 0, marginBottom: "6px" }}>
@@ -312,7 +311,7 @@ export default function Login() {
 
               <motion.button
                 type="submit" disabled={isLoading} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
-                style={{ marginTop: "8px", width: "100%", padding: "14px", border: "none", borderRadius: "14px", color: "white", fontSize: "14px", fontWeight: 700, cursor: isLoading ? "not-allowed" : "pointer", background: isLoading ? "rgba(79,70,229,0.5)" : "linear-gradient(135deg, #3B82F6 0%, #4F46E5 50%, #7C3AED 100%)", display: "flex", alignItems: "center", justifycenter: "center", gap: "8px", letterSpacing: "-0.01em", boxShadow: isLoading ? "none" : "0 8px 24px rgba(79,70,229,0.3)" }}
+                style={{ marginTop: "8px", width: "100%", padding: "14px", border: "none", borderRadius: "14px", color: "white", fontSize: "14px", fontWeight: 700, cursor: isLoading ? "not-allowed" : "pointer", background: isLoading ? "rgba(79,70,229,0.5)" : "linear-gradient(135deg, #3B82F6 0%, #4F46E5 50%, #7C3AED 100%)", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", letterSpacing: "-0.01em", boxShadow: isLoading ? "none" : "0 8px 24px rgba(79,70,229,0.3)" }}
               >
                 <AnimatePresence mode="wait">
                   {isLoading ? (
@@ -336,12 +335,12 @@ export default function Login() {
               <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.06)" }} />
             </div>
 
-            <motion.button type="button" onClick={toggleMode} whileHover={{ borderColor: "rgba(99,102,241,0.35)", background: "rgba(99,102,241,0.06)" }} style={{ width: "100%", padding: "13px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", color: "#94A3B8", fontSize: "13px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifycenter: "center", gap: "8px" }} >
+            <motion.button type="button" onClick={toggleMode} whileHover={{ borderColor: "rgba(99,102,241,0.35)", background: "rgba(99,102,241,0.06)" }} style={{ width: "100%", padding: "13px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", color: "#94A3B8", fontSize: "13px", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }} >
               {isRegister ? "Sudah punya akun? Masuk sekarang" : "Belum punya akun? Daftar sekarang"}
               <ChevronRight size={14} />
             </motion.button>
 
-            <div style={{ marginTop: "24px", paddingTop: "18px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifycenter: "center", gap: "12px" }}>
+            <div style={{ marginTop: "24px", paddingTop: "18px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#475569" }}><ShieldCheck size={12} color="#4F46E5" /> SSL 256-bit</div>
               <div style={{ width: "1px", height: "10px", background: "rgba(255,255,255,0.05)" }} />
               <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#475569" }}><Lock size={12} color="#4F46E5" /> Terenkripsi</div>

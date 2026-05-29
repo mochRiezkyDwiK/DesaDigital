@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -176,7 +176,14 @@ export default function DashboardWarga() {
         api.get("/warga/pengaduan/riwayat")
           .then((res) => {
             if (res.data?.success && Array.isArray(res.data?.data)) {
-              setPengaduanList(res.data.data);
+              const mappedPengaduan = res.data.data.map((p: any) => ({
+                ...p,
+                kodePengaduan: p.kode_pengaduan || p.kodePengaduan,
+                alasanDitolak: p.alasan_ditolak || p.alasanDitolak,
+                createdAt: p.created_at || p.createdAt,
+                updatedAt: p.updated_at || p.updatedAt,
+              }));
+              setPengaduanList(mappedPengaduan);
             }
           })
           .catch((err) => console.error("Failed to fetch pengaduan", err))
@@ -220,7 +227,7 @@ export default function DashboardWarga() {
     }
   };
 
-  let suratListContent: JSX.Element | JSX.Element[];
+  let suratListContent: React.ReactElement | React.ReactElement[];
   if (isLoadingSurat) {
     suratListContent = (
       <div className="p-7 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm text-slate-400 text-sm font-medium">
@@ -298,7 +305,7 @@ export default function DashboardWarga() {
                 href={surat.dokumenUrl ? `http://localhost:5000${surat.dokumenUrl}` : "#"}
                 target="_blank"
                 rel="noreferrer"
-                disabled={!surat.dokumenUrl}
+                aria-disabled={!surat.dokumenUrl}
                 className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest hover:bg-slate-900 transition-all ${!surat.dokumenUrl && 'opacity-50 cursor-not-allowed'}`}
               >
                 <Download size={14} /> Download PDF Resmi

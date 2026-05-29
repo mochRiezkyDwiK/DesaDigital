@@ -18,7 +18,8 @@ import {
   Users,
   BarChart3,
   Settings,
-  Building2
+  Building2,
+  Activity
 } from "lucide-react";
 
 // ─── DUMMY DATA LAPORAN ──────────────────────────────────────────────────────
@@ -173,6 +174,4 @@ export default function AdminLaporan() {
     </div>
   );
 }
-
-// Ikon Activity yang tadi terlewat
-import { Activity } from "lucide-react";
+
